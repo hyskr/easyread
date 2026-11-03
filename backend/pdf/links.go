@@ -53,7 +53,7 @@ func safeURL(s string) string {
 }
 func parseLinks(data []byte) map[string][]Link {
 	result := map[string][]Link{}
-	d := xml.NewDecoder(bytes.NewReader(data))
+	d := xml.NewDecoder(bytes.NewReader(cleanPDFXML(data)))
 	d.Strict = false
 	page := "1"
 	var current *Link

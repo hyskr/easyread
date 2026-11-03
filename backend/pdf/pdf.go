@@ -258,7 +258,7 @@ type bboxPage struct {
 }
 
 func parseWords(data []byte) (bboxPage, error) {
-	d := xml.NewDecoder(bytes.NewReader(data))
+	d := xml.NewDecoder(bytes.NewReader(cleanPDFXML(data)))
 	d.Strict = false
 	for {
 		tok, e := d.Token()
