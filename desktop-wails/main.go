@@ -139,6 +139,7 @@ func main() {
 			}
 			r.Body.Close()
 			bridge := `<script>
+document.addEventListener("contextmenu", e => e.preventDefault());
 window.addEventListener("keydown",e=>{if(e.key==="Escape"&&!e.isComposing)e.preventDefault()});
 const pending=new Map();let serial=0;
 function native(method,...args){return new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});window.top.postMessage({easyreadNative:true,id,method,args},'*')})}
@@ -173,6 +174,7 @@ const originalClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototyp
 	pageURL := "http://" + listener.Addr().String() + "/web/tabs.html"
 	pageJSON, _ := json.Marshal(pageURL)
 	host := `<!doctype html><html><head><style>html,body,iframe{margin:0;border:0;width:100%;height:100%;overflow:hidden}</style></head><body><iframe id="app"></iframe><script>
+document.addEventListener("contextmenu",e=>e.preventDefault());
  const app=document.querySelector('iframe');app.src=` + string(pageJSON) + `;
  window.addEventListener('message',async e=>{const d=e.data;if(!d?.easyreadNative||e.origin!==new URL(app.src).origin)return;
  if(!['PickFolder','Save','Export','QuitSaved','QuitFailed','PageReady'].includes(d.method))return;
