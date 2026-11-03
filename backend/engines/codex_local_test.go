@@ -14,7 +14,7 @@ func TestLocalCodexConfigStartup(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command("codex", "login", "status")
+	cmd := exec.Command("codex", append([]string{"mcp", "list"}, codexLeanArgs()...)...)
 	cmd.Env = env
 	if output, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("startup: %v: %s", err, output)

@@ -5,7 +5,7 @@ npm run build:editor
 node scripts/build_backend.cjs
 go run scripts/wails_icon.go
 cd desktop-wails
-CGO_LDFLAGS='-framework UniformTypeIdentifiers' go build -ldflags "-X main.version=${WAILS_VERSION:-1.4.16}" -tags production -o 'build/bin/EasyRead Wails.app/Contents/MacOS/EasyRead Wails' .
+CGO_LDFLAGS='-framework UniformTypeIdentifiers' go build -ldflags "-X main.version=${WAILS_VERSION:-1.4.17}" -tags production -o 'build/bin/EasyRead Wails.app/Contents/MacOS/EasyRead Wails' .
 app='build/bin/EasyRead Wails.app'
 mkdir -p "$app/Contents/Resources/backend"
 cp -R ../build/backend/. "$app/Contents/Resources/backend/"
@@ -19,5 +19,5 @@ for size in 16 32 128 256 512; do
 done
 iconutil -c icns "$iconset" -o "$app/Contents/Resources/iconfile.icns"
 rm -rf "$(dirname "$iconset")"
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${WAILS_VERSION:-1.4.16}" "$app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${WAILS_VERSION:-1.4.17}" "$app/Contents/Info.plist"
 node -e 'require("../scripts/mac_sign.cjs").default({electronPlatformName:"darwin",appOutDir:"build/bin",packager:{appInfo:{productFilename:"EasyRead Wails"}}}).catch(e=>{console.error(e);process.exit(1)})'

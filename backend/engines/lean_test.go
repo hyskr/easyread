@@ -63,12 +63,12 @@ func TestCodexLeanPreservesConfigDisablesMCPAndFeatures(t *testing.T) {
 	path := filepath.Join(home, "config.toml")
 	os.WriteFile(path, []byte(source), 0600)
 	args := strings.Join(codexLeanArgs(), " ")
-	for _, part := range []string{`mcp_servers."foo".enabled=false`, `mcp_servers."foo.bar".enabled=false`, `mcp_servers."quoted".enabled=false`, `notify=[]`, `features.image_generation=false`, `features.plugins=false`, `features.multi_agent=false`} {
+	for _, part := range []string{`notify=[]`, `features.image_generation=false`, `features.plugins=false`, `features.multi_agent=false`} {
 		if !strings.Contains(args, part) {
 			t.Fatalf("missing %s in %s", part, args)
 		}
 	}
-	if strings.Contains(args, "provider") || strings.Contains(args, "my-model") || strings.Contains(args, ".env") {
+	if strings.Contains(args, "mcp_servers") || strings.Contains(args, "provider") || strings.Contains(args, "my-model") || strings.Contains(args, ".env") {
 		t.Fatal(args)
 	}
 	b, _ := os.ReadFile(path)
