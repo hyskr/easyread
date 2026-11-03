@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -91,6 +92,14 @@ func main() {
 	app := &App{command: cmd, url: address}
 	target, _ := url.Parse(address)
 	proxy := httputil.NewSingleHostReverseProxy(target)
+	originalDirector := proxy.Director
+	proxy.Director = func(r *http.Request) {
+		originalDirector(r)
+		r.Host = target.Host
+		if r.Header.Get("Origin") != "" {
+			r.Header.Set("Origin", address)
+		}
+	}
 	proxy.ModifyResponse = func(r *http.Response) error {
 		if strings.Contains(r.Header.Get("Content-Type"), "text/html") {
 			b, e := io.ReadAll(r.Body)
@@ -98,10 +107,13 @@ func main() {
 				return e
 			}
 			r.Body.Close()
-			bridge := `<script src="/wails/ipc.js"></script><script src="/wails/runtime.js"></script><script>
-if(window===window.top && ['/','/index.html'].includes(location.pathname))location.replace('/web/tabs.html');
-window.easyreadDesktop={isElectron:false,isWails:true,platform:'darwin',pickFolder:()=>window.go.main.App.PickFolder(),saveExport:p=>window.go.main.App.Save(p.filename,p.data),exportDirectory:async()=>'',updateState:async()=>({supported:false}),onUpdateState:()=>()=>{},onBeforeQuit:cb=>{window.wailsSave=cb}};
-document.addEventListener('click',async e=>{const a=e.target.closest('a[download]');if(!a)return;e.preventDefault();e.stopImmediatePropagation();try{const b=await(await fetch(a.href)).blob();const r=new FileReader();r.onload=()=>window.go.main.App.Save(a.download,String(r.result).split(',')[1]);r.readAsDataURL(b)}catch(err){alert(err.message)}},true);
+			bridge := `<script>
+const pending=new Map();let serial=0;
+function native(method,...args){return new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});window.top.postMessage({easyreadNative:true,id,method,args},'*')})}
+window.addEventListener('message',e=>{const d=e.data;if(d?.easyreadReply){const p=pending.get(d.id);if(p){pending.delete(d.id);d.error?p.reject(Error(d.error)):p.resolve(d.value)}}if(d?.easyreadOpen&&window.easyreadTabs)window.easyreadTabs.open(d.easyreadOpen);if(d?.easyreadSave&&window.easyreadTabs)window.easyreadTabs.saveAll().then(r=>{if(r.every(v=>v!==false))native('QuitSaved')})});
+window.go={main:{App:{PickFolder:()=>native('PickFolder'),Save:(...args)=>native('Save',...args)}}};
+window.easyreadDesktop={isElectron:false,isWails:true,platform:'darwin',pickFolder:()=>window.go.main.App.PickFolder(),saveExport:p=>p.choose?Promise.resolve({token:p.filename,path:p.filename}):window.go.main.App.Save(p.filename,p.data),exportDirectory:async()=>'',updateState:async()=>({supported:false}),onUpdateState:()=>()=>{},onBeforeQuit:cb=>{window.wailsSave=cb}};
+const originalClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.download){exportFile(this);return}return originalClick.call(this)};async function exportFile(a){try{const b=await(await fetch(a.href)).blob();const r=new FileReader();r.onload=()=>window.go.main.App.Save(a.download,String(r.result).split(',')[1]);r.readAsDataURL(b)}catch(err){alert(err.message)}};document.addEventListener('click',async e=>{const a=e.target.closest('a[download]');if(!a)return;e.preventDefault();e.stopImmediatePropagation();try{const b=await(await fetch(a.href)).blob();const r=new FileReader();r.onload=()=>window.go.main.App.Save(a.download,String(r.result).split(',')[1]);r.readAsDataURL(b)}catch(err){alert(err.message)}},true);
 </script>`
 			html := strings.Replace(string(b), "<head>", "<head>"+bridge, 1)
 			r.Body = io.NopCloser(strings.NewReader(html))
@@ -113,17 +125,37 @@ document.addEventListener('click',async e=>{const a=e.target.closest('a[download
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		proxy.ServeHTTP(w, r)
 	})
-	err = wails.Run(&options.App{Title: "EasyRead Wails", Width: 1440, Height: 960, AssetServer: &assetserver.Options{Handler: handler}, OnStartup: app.startup, Mac: &mac.Options{OnUrlOpen: func(raw string) {
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		panic(err)
+	}
+	server := &http.Server{Handler: handler}
+	go server.Serve(listener)
+	defer server.Close()
+	pageURL := "http://" + listener.Addr().String() + "/web/tabs.html"
+	pageJSON, _ := json.Marshal(pageURL)
+	host := `<!doctype html><html><head><style>html,body,iframe{margin:0;border:0;width:100%;height:100%;overflow:hidden}</style></head><body><iframe id="app"></iframe><script>
+ const app=document.querySelector('iframe');app.src=` + string(pageJSON) + `;
+ window.addEventListener('message',async e=>{const d=e.data;if(!d?.easyreadNative||e.origin!==new URL(app.src).origin)return;
+ if(!['PickFolder','Save','QuitSaved'].includes(d.method))return;
+ try{const value=await window.go.main.App[d.method](...d.args);e.source.postMessage({easyreadReply:true,id:d.id,value},e.origin)}catch(error){e.source.postMessage({easyreadReply:true,id:d.id,error:error.message},e.origin)}});
+ </script></body></html>`
+	nativeHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		io.WriteString(w, host)
+	})
+	err = wails.Run(&options.App{Title: "EasyRead Wails", Width: 1440, Height: 960, AssetServer: &assetserver.Options{Handler: nativeHandler}, OnStartup: app.startup, Mac: &mac.Options{OnUrlOpen: func(raw string) {
 		u, e := url.Parse(raw)
 		if e == nil && u.Scheme == "easyread" {
 			b, _ := json.Marshal("/open?" + u.RawQuery)
-			wr.WindowExecJS(app.ctx, "window.easyreadTabs?.open("+string(b)+")")
+			wr.WindowExecJS(app.ctx, "document.querySelector('iframe').contentWindow.postMessage({easyreadOpen:"+string(b)+"},'*')")
 		}
 	}}, OnBeforeClose: func(context.Context) bool {
 		if app.closing.Load() {
 			return false
 		}
-		wr.WindowExecJS(app.ctx, `Promise.resolve(window.easyreadTabs?.saveAll()).then(r=>{if(!r||r.every(x=>x!==false))window.go.main.App.QuitSaved()}).catch(e=>alert(e.message))`)
+		wr.WindowExecJS(app.ctx, `document.querySelector("iframe").contentWindow.postMessage({easyreadSave:true},"*")`)
 		return true
 	}, OnShutdown: func(context.Context) { cmd.Process.Signal(os.Interrupt); go cmd.Wait() }, Bind: []interface{}{app}})
 	if err != nil {
