@@ -15,7 +15,7 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-var version = "1.4.17"
+var version = "1.4.18"
 
 type downloadProgress struct {
 	app             *App

@@ -416,7 +416,7 @@ func TestCodexImageCancellationTimeoutAndPreCancelled(t *testing.T) {
 			} else {
 				go func() {
 					for i := 0; i < 100; i++ {
-						if _, e := os.Stat(log); e == nil {
+						if data, e := os.ReadFile(log); e == nil && strings.Contains(string(data), "\n") {
 							cancel()
 							return
 						}

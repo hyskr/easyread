@@ -47,6 +47,9 @@ func leanFixture(t *testing.T, engine string) (M, string, string) {
 		response = `{"type":"item.completed","item":{"type":"agent_message","text":"{\"zh\":\"新译文\"}"}}`
 	}
 	script := fmt.Sprintf("#!/bin/sh\nprintf 'CALL\\n' >> '%s'\nprintf '%%s\\n' \"$@\" >> '%s'\nif [ -f paper.json ]; then printf 'paper\\n' >> '%s'; else printf 'isolated\\n' >> '%s'; fi\ncat >/dev/null\nprintf '%%s\\n' '%s'\n", log, log, state, state, response)
+	if engine == "codex" {
+		script = strings.Replace(script, "#!/bin/sh\n", "#!/bin/sh\nif grep -q mcp_servers \"$CODEX_HOME/config.toml\"; then echo 'MCP leaked' >&2; exit 1; fi\ngrep -q fixture \"$CODEX_HOME/config.toml\" || exit 2\n", 1)
+	}
 	if e := os.WriteFile(command, []byte(script), 0700); e != nil {
 		t.Fatal(e)
 	}
@@ -148,7 +151,7 @@ func TestCodexChatAnswerRetranslateLeanIsolation(t *testing.T) {
 	}
 	for _, c := range calls[1:] {
 		args := strings.Split(strings.TrimSpace(c), "\n")
-		if argValue(args, "--model") != "opus" || argValue(args, "--sandbox") != "read-only" || !(strings.Contains(c, "mcp_servers.test.enabled=false") || strings.Contains(c, `mcp_servers."test".enabled=false`)) || !strings.Contains(c, "features.multi_agent=false") || !strings.Contains(c, "notify=[]") {
+		if argValue(args, "--model") != "opus" || argValue(args, "--sandbox") != "read-only" || strings.Contains(c, "mcp_servers") || !strings.Contains(c, "features.multi_agent=false") || !strings.Contains(c, "notify=[]") {
 			t.Fatal("missing lean restrictions", c)
 		}
 	}
