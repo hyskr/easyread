@@ -16,7 +16,8 @@ export const NoteQuote = Blockquote.extend({
       let expanded = false, href = '', title = '';
       const measure = () => {
         const line = parseFloat(getComputedStyle(contentDOM).lineHeight);
-        const long = !!href && contentDOM.scrollHeight > line * 2 + 2;
+        const hasFormula = !!contentDOM.querySelector('.tiptap-mathematics-render, .katex');
+        const long = !!href && !hasFormula && contentDOM.scrollHeight > line * 2 + 2;
         dom.classList.toggle('pn-quote-collapsed', long && !expanded);
         controls.hidden = !href; toggle.hidden = !long;
         toggle.textContent = window.PR.t(expanded ? '收起引用' : '展开引用');

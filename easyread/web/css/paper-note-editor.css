@@ -114,3 +114,8 @@ body:has(#notespanel.pn-expanded) .tiptap-popover, body:has(#notespanel.pn-expan
 .pn-reference-menu .btn { display: block; width: 100%; text-align: left; white-space: normal; margin-bottom: 4px; }
 @media(max-width: 759px) { #paper .pn-source-links { right: 0; top: -20px; } }
 
+
+.pn-prose .tiptap-mathematics-render { max-width: 100%; overflow-x: auto; overflow-y: hidden; vertical-align: middle; }
+.pn-source-quote:has(.katex) .pn-quote-content { overflow-x: auto; }
+.pn-map-svg .pn-map-formula { position: relative; display: inline-block; max-width: 100%; overflow-x: auto; vertical-align: middle; }
+.pn-map-svg .katex-mathml { display: none; }

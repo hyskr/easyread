@@ -48,8 +48,9 @@ test('formatting, equations and code remain visible without interpreting literal
     { type: 'blockMath', attrs: { latex: 'E=mc^2' } },
     { type: 'codeBlock', content: [text('# code\n<script>')] },
   ] }, '论文');
-  assert.equal(map.children[0].content, '<strong>&lt;img&gt;</strong><math display="false">x=y</math>');
-  assert.equal(map.children[1].content, '<math display="true">E=mc^2</math>');
+  assert.ok(map.children[0].content.includes('<strong>&lt;img&gt;</strong>'));
+  assert.ok(map.children[0].content.includes('<math display="false">x=y</math>'));
+  assert.ok(map.children[1].content.includes('<math display="true">E=mc^2</math>'));
   assert.equal(map.children[2].content, '<pre><code># code\n&lt;script&gt;</code></pre>');
 });
 
@@ -99,4 +100,12 @@ test('multi-paragraph quotations form one map node with the full source range', 
   assert.equal(map.children.length, 1);
   assert.equal(map.children[0].content, '<p>First paragraph</p><p>Second paragraph</p>');
   assert.equal(map.children[0].payload.type, 'blockquote');
+});
+
+test('source links on the same page share one visible page label', () => {
+  const { toMindMap } = libraries();
+  const source = id => ({type:'text',text:'第 46 页',marks:[{type:'link',attrs:{href:'#b-'+id}}]});
+  const map = toMindMap({content:[{type:'blockquote',content:[{type:'paragraph',content:[text('A'),source('eq1')]},{type:'paragraph',content:[text('B'),source('eq2')]}]}]},'Paper');
+  assert.equal((map.children[0].content.match(/第 46 页/g)||[]).length,1);
+  assert.ok(map.children[0].content.includes('data-note-sources="eq1 eq2"'));
 });

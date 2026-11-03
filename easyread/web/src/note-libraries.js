@@ -99,8 +99,12 @@ function createEditor({ element, content, onChange, onSelection, onMathClick }) 
   return instance;
 }
 
+function mapFormula(latex, display) {
+  const html = PR.tex(latex, display).replace(/<span class="katex-mathml">[\s\S]*?<\/span>/g, '');
+  return '<span class="pn-map-formula" role="math" aria-label="' + PR.esc(latex) + '">' + html + '</span>';
+}
 function inline(node) {
-  if (node.type === 'inlineMath') return PR.tex(node.attrs.latex, false);
+  if (node.type === 'inlineMath') return mapFormula(node.attrs.latex, false);
   if (node.type === 'hardBreak') return '<br>';
   if (node.type === 'image') {
     const { src, alt } = node.attrs, label = PR.esc(alt || PR.t('图片'));
@@ -159,13 +163,15 @@ function toMindMap(doc, title) {
         return { ...part, ...(part.content ? { content: part.content.map(withoutSources) } : {}) };
       }
       const paragraphs = (node.content || []).map(part => '<p>' + inline(withoutSources(part)) + '</p>').join('');
-      const links = [...sources].map(([href, title]) => '<a href="' + PR.esc(href) + '">' + PR.esc(title) + '</a>').join(' · ');
+      const labels = new Map();
+      for (const [href, title] of sources) labels.set(title, [...(labels.get(title) || []), href.slice(3)]);
+      const links = [...labels].map(([title, anchors]) => '<a href="#b-' + PR.esc(anchors[0]) + '" data-note-sources="' + PR.esc(anchors.join(' ')) + '">' + PR.esc(title) + '</a>').join(' · ');
       parent.children.push({ content: paragraphs + (links ? '<p>' + links + '</p>' : ''), children: [], payload: ranges.get(node) });
       return;
     }
     if (node.type === 'horizontalRule') return;
     let content;
-    if (node.type === 'blockMath') content = PR.tex(node.attrs.latex, true);
+    if (node.type === 'blockMath') content = mapFormula(node.attrs.latex, true);
     else if (node.type === 'codeBlock') content = '<pre><code>' + PR.esc((node.content || []).map(n => n.text || '').join('')) + '</code></pre>';
     else if (node.type === 'table') content = '<table>' + (node.content || []).map(row => '<tr>' + (row.content || []).map(cell => '<td>' + inline(cell) + '</td>').join('') + '</tr>').join('') + '</table>';
     else content = inline(node);
