@@ -74,6 +74,26 @@ func main() {
 		dataHome = filepath.Join(home, "EasyRead")
 	}
 	cmd.Env = append(os.Environ(), "EASYREAD_HOME="+dataHome)
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		shell = "/bin/zsh"
+	}
+	shellCtx, shellCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shellPath, shellError := exec.CommandContext(shellCtx, shell, "-ilc", "/usr/bin/printenv PATH").Output()
+	shellCancel()
+	if shellError == nil {
+		lines := strings.Split(strings.TrimSpace(string(shellPath)), "\n")
+		value := lines[len(lines)-1]
+		if value != "" {
+			filtered := []string{}
+			for _, entry := range cmd.Env {
+				if !strings.HasPrefix(entry, "PATH=") {
+					filtered = append(filtered, entry)
+				}
+			}
+			cmd.Env = append(filtered, "PATH="+value)
+		}
+	}
 	pipe, err := cmd.StdoutPipe()
 	if err != nil {
 		panic(err)
