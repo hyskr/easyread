@@ -27,13 +27,13 @@ function MoreTools({ editor, onMath }) {
   const [open, setOpen] = React.useState(false);
   const [link, setLink] = React.useState(false);
   const [zoomMenu, setZoomMenu] = React.useState(false);
-  const [zoom, setZoom] = React.useState(() => PR.ls.get("easyread-note-zoom", 100));
+  const [zoom, setZoom] = React.useState(() => PR.prefs.noteZoom ?? PR.ls.get("easyread-note-zoom", 100));
   const zoomButton = React.useRef<HTMLButtonElement | null>(null);
   const close = () => { setOpen(false); setLink(false); setZoomMenu(false); editor.view.focus(); };
   const applyZoom = (value: number) => {
     setZoom(value);
     document.querySelector<HTMLElement>('.pn-workspace').style.setProperty('--note-zoom', String(value / 100));
-    PR.ls.set('easyread-note-zoom', value);
+    PR.prefs.noteZoom = value; PR.applyPrefs();
     close();
   };
   const insertImages = (event: React.ChangeEvent<HTMLInputElement>) => {

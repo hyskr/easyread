@@ -199,8 +199,11 @@
         '<div class="pn-map"><svg class="pn-map-svg" role="img" tabindex="0" aria-label="' + label(PR.t("思维导图：拖动平移、滚轮缩放，点击圆点展开或收起")) + '"></svg><p class="pn-map-empty">' + PR.t("写下笔记，思维导图会自动出现在这里。") + '</p></div></section></div>';
     },
     mount(body) {
+      split = PR.prefs.noteSplit ?? split;
+      layout = PR.prefs.noteLayout ?? layout;
+      mapVisible = PR.prefs.noteMapVisible ?? mapVisible;
       richSource = body; firstMap = true; mapBody = null;
-      workspace().style.setProperty("--note-zoom", PR.ls.get("easyread-note-zoom", 100) / 100);
+      workspace().style.setProperty("--note-zoom", (PR.prefs.noteZoom ?? PR.ls.get("easyread-note-zoom", 100)) / 100);
       rich = libraries.createEditor({
         element: workspace().querySelector(".pn-rich"), content: body,
         onChange(text) {
@@ -212,7 +215,7 @@
         onMathClick: (node, pos, display) => openFormula(node.attrs.latex, pos, display),
       });
       unmountToolbar = libraries.mountNoteToolbar(workspace().querySelector(".pn-format"), rich, () => openFormula());
-      map = libraries.Markmap.create(workspace().querySelector("svg"), { duration: 0, maxWidth: 220, paddingX: 10, spacingVertical: 8 });
+      map = libraries.Markmap.create(workspace().querySelector(".pn-map-svg"), { duration: 0, maxWidth: 220, paddingX: 10, spacingVertical: 8 });
       setMode(mode); setSplit(split); setLayout();
       observer = new ResizeObserver(() => { if (!workspace().querySelector(".pn-mindmap").hidden && map && !firstMap) map.fit(); });
       observer.observe(workspace().querySelector(".pn-map"));
@@ -224,17 +227,25 @@
       if (map) { map.destroy(); map = null; }
       if (rich) { rich.destroy(); rich = null; }
     },
-    insertSources(parts) {
+    async insertSources(parts) {
       setMode("rich");
       const paragraphs = [];
       for (const part of parts) {
         const block = PR.blockById[part.anchor];
         if (!block) continue;
         const title = PR.t("第 {page} 页", { page: block.page || 1 });
-        paragraphs.push({ type: "paragraph", content: [
-          ...(block.type === "math" && block.tex ? [{ type: "inlineMath", attrs: { latex: block.tex } }, { type: "text", text: " " }] : [...(part.quoteContent || [{ type: "text", text: part.quote }]), { type: "text", text: " " }]),
-          { type: "text", text: title, marks: [{ type: "link", attrs: { href: "#b-" + part.anchor } }] },
-        ] });
+        if (block.type === "math" && block.tex) paragraphs.push({ type: "blockMath", attrs: { latex: block.tex } });
+        else if (part.quoteHTML) {
+          const container = document.createElement('div'); container.innerHTML = part.quoteHTML;
+          for (const image of container.querySelectorAll('img[src]')) {
+            const response = await fetch(image.src);
+            if (!response.ok) throw new Error(PR.t("图片读取失败，请重新粘贴"));
+            const blob = await response.blob();
+            image.src = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(blob); });
+          }
+          paragraphs.push(...libraries.parseQuote(rich, container));
+        } else paragraphs.push({ type: "paragraph", content: [{ type: "text", text: part.quote }] });
+        paragraphs.push({ type: "paragraph", content: [{ type: "text", text: title, marks: [{ type: "link", attrs: { href: "#b-" + part.anchor } }] }] });
       }
       if (!paragraphs.length) return;
       const content = [{ type: "blockquote", content: paragraphs }, { type: "paragraph" }];
@@ -295,7 +306,7 @@
     }
     if (e.target.closest("[data-note-expand]")) { expanded = !expanded; setLayout(); return; }
     const layoutButton = e.target.closest("[data-note-layout]");
-    if (layoutButton) { layout = layoutButton.dataset.noteLayout; PR.ls.set("easyread-note-layout", layout); setLayout(); return; }
+    if (layoutButton) { layout = layoutButton.dataset.noteLayout; PR.prefs.noteLayout = layout; PR.applyPrefs(); setLayout(); return; }
     const focusButton = e.target.closest("[data-note-focus]");
     if (focusButton) { focus = focusButton.dataset.noteFocus; setLayout(); return; }
     if (e.target.closest("[data-note-xmind], [data-note-map-export]")) panel.querySelector("#pnExportMenu").hidePopover();
@@ -310,7 +321,7 @@
     if (e.target.closest("[data-note-map-toggle]")) {
       if (expanded) { focus = focus === "note" ? "both" : "note"; setLayout(); return; }
       setMapVisible(!mapVisible);
-      PR.ls.set("easyread-note-map-visible", mapVisible);
+      PR.prefs.noteMapVisible = mapVisible; PR.applyPrefs();
       return;
     }
     if (e.target.closest(".pn-prose")) { revealSelection(); return; }
@@ -344,9 +355,9 @@
     if (!e.target.matches(".pn-divider")) return;
     const next = { [horizontal() ? "ArrowLeft" : "ArrowUp"]: split - 5, [horizontal() ? "ArrowRight" : "ArrowDown"]: split + 5, Home: 25, End: 80 }[e.key];
     if (next == null) return;
-    e.preventDefault(); e.stopPropagation(); setSplit(next); PR.ls.set("easyread-note-split", split);
+    e.preventDefault(); e.stopPropagation(); setSplit(next); PR.prefs.noteSplit = split; PR.applyPrefs();
   });
-  panel.addEventListener("dblclick", e => { if (e.target.matches(".pn-divider")) { setSplit(58); PR.ls.set("easyread-note-split", split); } });
+  panel.addEventListener("dblclick", e => { if (e.target.matches(".pn-divider")) { setSplit(58); PR.prefs.noteSplit = split; PR.applyPrefs(); } });
   panel.addEventListener("pointerdown", e => {
     if (!e.target.matches(".pn-divider") || e.button !== 0) return;
     e.preventDefault();
@@ -355,7 +366,7 @@
     const move = ev => setSplit(horizontal() ? (ev.clientX - rect.left) / rect.width * 100 : (ev.clientY - rect.top) / rect.height * 100);
     const stop = () => {
       grip.removeEventListener("pointermove", move); grip.removeEventListener("pointerup", stop); grip.removeEventListener("pointercancel", stop);
-      el.classList.remove("pn-resizing"); PR.ls.set("easyread-note-split", split);
+      el.classList.remove("pn-resizing"); PR.prefs.noteSplit = split; PR.applyPrefs();
     };
     grip.addEventListener("pointermove", move); grip.addEventListener("pointerup", stop); grip.addEventListener("pointercancel", stop);
   });

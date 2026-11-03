@@ -197,21 +197,6 @@ func (a *App) stopService() error {
 	}
 	return nil
 }
-func (a *App) QuitSaved() error {
-	if err := a.stopService(); err != nil {
-		return err
-	}
-	a.saveWindow()
-	if err := a.launchInstaller(); err != nil {
-		return err
-	}
-	a.closing.Store(true)
-	wr.Quit(a.ctx)
-	return nil
-}
-func (a *App) requestQuit() {
-	wr.WindowExecJS(a.ctx, `document.querySelector('iframe').contentWindow.postMessage({easyreadSave:true},'*')`)
-}
 func (a *App) menus() *menu.Menu {
 	m := menu.NewMenu()
 	app := m.AddSubmenu("EasyRead Wails")

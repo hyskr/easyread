@@ -49,8 +49,10 @@ test('formatting, equations and code remain visible without interpreting literal
     { type: 'codeBlock', content: [text('# code\n<script>')] },
   ] }, '论文');
   assert.ok(map.children[0].content.includes('<strong>&lt;img&gt;</strong>'));
-  assert.ok(map.children[0].content.includes('<math display="false">x=y</math>'));
-  assert.ok(map.children[1].content.includes('<math display="true">E=mc^2</math>'));
+  assert.ok(map.children[0].content.includes('pn-map-math'));
+  assert.ok(map.children[0].content.includes('data:image/svg+xml'));
+  assert.ok(map.children[0].content.includes('alt="x=y"'));
+  assert.ok(map.children[1].content.includes('alt="E=mc^2"'));
   assert.equal(map.children[2].content, '<pre><code># code\n&lt;script&gt;</code></pre>');
 });
 

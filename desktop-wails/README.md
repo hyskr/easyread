@@ -28,3 +28,7 @@ Wails 导出使用 `easyread-wails://open?...`，Electron 继续使用 `easyread
 ## 发布
 
 仓库 Secrets 需要 MAC_SIGN_P12 与 MAC_SIGN_P12_PASSWORD。推送 `wails-v1.4.7` 等标签后，Wails 工作流生成 DMG 和 ZIP 并发布到 hyskr/easyread。签名证书必须跨版本保持一致；更换证书后需手动安装。当前为固定自签名，不包含 Apple 公证。
+
+## 本地源码试用
+
+`EASYREAD_WAILS_DEV_ROOT` 可设为仓库绝对路径。此时使用仓库 .venv 的 Python 启动源码后端，刷新页面即可查看 js/reader、CSS、HTML 改动；修改 web/src 后仍需 npm run build:editor。数据继续使用 ~/EasyRead，不需要重复生成 DMG。

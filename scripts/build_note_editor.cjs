@@ -10,6 +10,7 @@ async function build() {
     entryPoints: [path.resolve(__dirname, '../easyread/web/src/note-libraries.js')],
     outfile: path.resolve(__dirname, '../easyread/web/vendor/note-libraries.js'),
     alias: { katex: path.resolve(__dirname, '../easyread/web/src/note-katex.js'), '@': ui },
+    define: { PACKAGE_VERSION: JSON.stringify(require('mathjax-full/package.json').version) },
     bundle: true, minify: true, format: 'iife', target: 'es2022', jsx: 'automatic',
     legalComments: 'linked', metafile: true,
     plugins: [{ name: 'note-ui-styles', setup(context) {

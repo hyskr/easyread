@@ -150,9 +150,29 @@
 
   /* ---------- 抽屉 ---------- */
   let tab = "toc";
+  PR.prefs.tocPinned ??= PR.ls.get("easyread-toc-pinned", false);
+  let tocPinned = PR.prefs.tocPinned;
+  const pinWidth = matchMedia("(min-width: 1180px)");
+  function syncPinned() {
+    tocPinned = !!PR.prefs.tocPinned;
+    const pinned = tocPinned && pinWidth.matches;
+    body.classList.toggle("toc-pinned", pinned);
+    const button = PR.$("[data-toc-pin]");
+    button.setAttribute("aria-pressed", String(tocPinned));
+    button.title = PR.t(tocPinned ? "取消固定目录" : "固定目录");
+    button.setAttribute("aria-label", button.title);
+    if (pinned) { body.classList.add("drawer-open"); PR.renderDrawer(); }
+    PR.fitWide?.(); PR.renderMargin?.();
+  }
+  pinWidth.addEventListener("change", syncPinned);
+  PR.on("rendered", syncPinned);
+  PR.$("[data-toc-pin]").addEventListener("click", () => {
+    tocPinned = !tocPinned; PR.prefs.tocPinned = tocPinned; PR.applyPrefs(); syncPinned();
+  });
   PR.toggleDrawer = function (force, which) {
     if (which) tab = which;
     const open = force != null ? force : !body.classList.contains("drawer-open");
+    if (!open && body.classList.contains("toc-pinned")) return;
     body.classList.toggle("drawer-open", open);
     if (open) PR.renderDrawer();
   };

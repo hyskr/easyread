@@ -87,7 +87,7 @@ function selectionToolbar(mode, side) {
     contains: () => true, querySelector: () => null,
   };
   text.parentElement = element;
-  const range = { startContainer: text, endContainer: text, startOffset: 3, endOffset: 12, getBoundingClientRect: () => rect };
+  const range = { cloneRange() { return {...this}; }, startContainer: text, endContainer: text, startOffset: 3, endOffset: 12, getBoundingClientRect: () => rect };
   const selection = { isCollapsed: false, rangeCount: 1, getRangeAt: () => range, removeAllRanges() { this.isCollapsed = true; } };
   const classes = new Set();
   const bar = { classList: { add: s => classes.add(s), remove: s => classes.delete(s), contains: s => classes.has(s) },

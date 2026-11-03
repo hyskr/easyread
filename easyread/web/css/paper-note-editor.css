@@ -119,3 +119,5 @@ body:has(#notespanel.pn-expanded) .tiptap-popover, body:has(#notespanel.pn-expan
 .pn-source-quote:has(.katex) .pn-quote-content { overflow-x: auto; }
 .pn-map-svg .pn-map-formula { position: relative; display: inline-block; max-width: 100%; overflow-x: auto; vertical-align: middle; }
 .pn-map-svg .katex-mathml { display: none; }
+
+.pn-map-svg .pn-map-math { display: inline-block; vertical-align: middle; max-width: none; }

@@ -33,6 +33,10 @@ type App struct {
 	command       *exec.Cmd
 	url           string
 	closing       atomic.Bool
+	backendDone   <-chan struct{}
+	quitMu        sync.Mutex
+	quitTimer     *time.Timer
+	quitPhase     string
 	updating      atomic.Bool
 	linkMu        sync.Mutex
 	pageReady     bool
@@ -60,6 +64,10 @@ func main() {
 	}
 	cmd := exec.Command(backend, "serve", "--port", "0")
 	cmd.Dir = home
+	if root := os.Getenv("EASYREAD_WAILS_DEV_ROOT"); root != "" {
+		cmd = exec.Command(filepath.Join(root, ".venv", "bin", "python"), "-m", "easyread", "serve", "--port", "0")
+		cmd.Dir = root
+	}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Env = append(os.Environ(), "PYTHONUNBUFFERED=1", "EASYREAD_HOME="+filepath.Join(home, "EasyRead"))
 	pipe, err := cmd.StdoutPipe()
@@ -107,7 +115,7 @@ func main() {
 		cmd.Process.Kill()
 		panic("Backend startup timed out")
 	}
-	app := &App{command: cmd, url: address, exports: make(map[string]string)}
+	app := &App{command: cmd, url: address, exports: make(map[string]string), backendDone: done}
 	state := loadWindow()
 	target, _ := url.Parse(address)
 	proxy := httputil.NewSingleHostReverseProxy(target)
@@ -120,6 +128,10 @@ func main() {
 		}
 	}
 	proxy.ModifyResponse = func(r *http.Response) error {
+		if os.Getenv("EASYREAD_WAILS_DEV_ROOT") != "" {
+			r.Header.Set("Cache-Control", "no-store")
+		}
+
 		if strings.Contains(r.Header.Get("Content-Type"), "text/html") {
 			b, e := io.ReadAll(r.Body)
 			if e != nil {
@@ -130,13 +142,17 @@ func main() {
 window.addEventListener("keydown",e=>{if(e.key==="Escape"&&!e.isComposing)e.preventDefault()});
 const pending=new Map();let serial=0;
 function native(method,...args){return new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});window.top.postMessage({easyreadNative:true,id,method,args},'*')})}
-window.addEventListener('message',e=>{const d=e.data;if(d?.easyreadReply){const p=pending.get(d.id);if(p){pending.delete(d.id);d.error?p.reject(Error(d.error)):p.resolve(d.value)}}if(d?.easyreadLibrary&&window.easyreadTabs)window.easyreadTabs.select('library');if(d?.easyreadCloseTab&&window.easyreadTabs){const tab=document.querySelector('.paper-tab.active .tab-title');if(tab&&tab.id!=='tab-library')window.easyreadTabs.close(tab.id.slice(4))}if(d?.easyreadOpen&&window.easyreadTabs)window.easyreadTabs.open(d.easyreadOpen);if(d?.easyreadSave&&window.easyreadTabs)window.easyreadTabs.saveAll().then(r=>{if(r.every(v=>v!==false))return native('QuitSaved');throw Error('笔记尚未保存成功，已取消退出')}).catch(error=>alert(error.message))});
+window.addEventListener('message',e=>{const d=e.data;if(d?.easyreadReply){const p=pending.get(d.id);if(p){pending.delete(d.id);d.error?p.reject(Error(d.error)):p.resolve(d.value)}}if(d?.easyreadLibrary&&window.easyreadTabs)window.easyreadTabs.select('library');if(d?.easyreadCloseTab&&window.easyreadTabs){const tab=document.querySelector('.paper-tab.active .tab-title');if(tab&&tab.id!=='tab-library')window.easyreadTabs.close(tab.id.slice(4))}if(d?.easyreadOpen&&window.easyreadTabs)window.easyreadTabs.open(d.easyreadOpen);if(d?.easyreadSave&&window.easyreadTabs)window.easyreadTabs.saveAll().then(r=>{if(r.every(v=>v!==false))return native('QuitSaved');throw Error('笔记尚未保存成功，已取消退出')}).catch(error=>native('QuitFailed',error.message))});
 window.addEventListener('load',()=>{if(window.easyreadTabs)native('PageReady')});
 window.go={main:{App:{PickFolder:()=>native('PickFolder'),Save:(...args)=>native('Save',...args)}}};
 window.easyreadDesktop={isElectron:false,isWails:true,deepLinkScheme:'easyread-wails',platform:'darwin',pickFolder:()=>window.go.main.App.PickFolder(),saveExport:p=>native('Export',p),exportDirectory:async()=>'',updateState:async()=>({supported:false}),onUpdateState:()=>()=>{},onBeforeQuit:cb=>{window.wailsSave=cb}};
 const originalClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.download){exportFile(this);return}return originalClick.call(this)};async function exportFile(a){try{const b=await(await fetch(a.href)).blob();const r=new FileReader();r.onload=()=>window.go.main.App.Save(a.download,String(r.result).split(',')[1]);r.readAsDataURL(b)}catch(err){alert(err.message)}};document.addEventListener('click',async e=>{const a=e.target.closest('a[download]');if(!a)return;e.preventDefault();e.stopImmediatePropagation();try{const b=await(await fetch(a.href)).blob();const r=new FileReader();r.onload=()=>window.go.main.App.Save(a.download,String(r.result).split(',')[1]);r.readAsDataURL(b)}catch(err){alert(err.message)}},true);
 </script>`
 			html := strings.Replace(string(b), "<head>", "<head>"+bridge, 1)
+			if os.Getenv("EASYREAD_WAILS_DEV_ROOT") != "" {
+				assets := regexp.MustCompile(`((?:src|href)="/web/[^"?]+)(")`)
+				html = assets.ReplaceAllString(html, "${1}?dev="+fmt.Sprint(time.Now().UnixNano())+"${2}")
+			}
 			r.Body = io.NopCloser(strings.NewReader(html))
 			r.ContentLength = int64(len(html))
 			r.Header.Del("Content-Length")
@@ -159,7 +175,7 @@ const originalClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototyp
 	host := `<!doctype html><html><head><style>html,body,iframe{margin:0;border:0;width:100%;height:100%;overflow:hidden}</style></head><body><iframe id="app"></iframe><script>
  const app=document.querySelector('iframe');app.src=` + string(pageJSON) + `;
  window.addEventListener('message',async e=>{const d=e.data;if(!d?.easyreadNative||e.origin!==new URL(app.src).origin)return;
- if(!['PickFolder','Save','Export','QuitSaved','PageReady'].includes(d.method))return;
+ if(!['PickFolder','Save','Export','QuitSaved','QuitFailed','PageReady'].includes(d.method))return;
  try{const value=await window.go.main.App[d.method](...d.args);e.source.postMessage({easyreadReply:true,id:d.id,value},e.origin)}catch(error){e.source.postMessage({easyreadReply:true,id:d.id,error:error.message},e.origin)}});
  </script></body></html>`
 	nativeHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -181,7 +197,7 @@ const originalClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototyp
 		if app.closing.Load() {
 			return false
 		}
-		wr.WindowExecJS(app.ctx, `document.querySelector("iframe").contentWindow.postMessage({easyreadSave:true},"*")`)
+		app.requestQuit()
 		return true
 	}, OnShutdown: func(context.Context) {
 		select {

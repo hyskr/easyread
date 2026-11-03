@@ -116,40 +116,20 @@
   /* ---------- 选中文字 -> 浮动条 ---------- */
   const selbar = () => PR.$("#selbar");
   let pendingSel = null;
+  const quoteRanges = new WeakMap();
 
   const MAX_PARTS = 20;
   /* 选区落在某个元素里的那一截；起点在它前面的从 0 算，终点在它后面的算到末尾 */
   function partOf(el, range) {
-    const math = el.classList.contains("math-body"), zh = math ? null : PR.zhOfEl(el), blk = el.closest(".blk");
-    if (!blk || (!math && !zh?.dataset.key) || el.querySelector("textarea")) return null;
+    const math = el.classList.contains("math-body"), media = el.classList.contains("tbl-wrap") || el.classList.contains("figure-media"), zh = math || media ? null : PR.zhOfEl(el), blk = el.closest(".blk");
+    if (!blk || (!math && !media && !zh?.dataset.key) || el.querySelector("textarea")) return null;
     const text = fullText(el);
     const s = el.contains(range.startContainer) ? offsetOf(el, range.startContainer, range.startOffset) : 0;
     const e = el.contains(range.endContainer) ? offsetOf(el, range.endContainer, range.endOffset) : text.length;
     const quote = text.slice(s, e);
     if (!quote.trim()) return null;
-    const out = { anchor: blk.dataset.id, key: math ? blk.dataset.id : zh.dataset.key, quote, prefix: text.slice(Math.max(0, s - 32), s), suffix: text.slice(e, e + 32) };
-    const quoteRange = range.cloneRange();
-    const startMath = (range.startContainer.parentElement || range.startContainer).closest?.('.katex');
-    const endMath = (range.endContainer.parentElement || range.endContainer).closest?.('.katex');
-    if (startMath && el.contains(startMath)) quoteRange.setStartBefore(startMath);
-    if (endMath && el.contains(endMath)) quoteRange.setEndAfter(endMath);
-    if (!el.contains(quoteRange.startContainer)) quoteRange.setStart(el, 0);
-    if (!el.contains(quoteRange.endContainer)) quoteRange.setEnd(el, el.childNodes.length);
-    const content = [];
-    function collect(node) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        if (node.textContent) content.push({ type: 'text', text: node.textContent });
-        return;
-      }
-      if (node.matches?.('.katex')) {
-        const latex = node.querySelector('annotation[encoding="application/x-tex"]')?.textContent;
-        if (latex) { content.push({ type: 'inlineMath', attrs: { latex } }); return; }
-      }
-      if (node.matches?.(SKIP)) return;
-      node.childNodes.forEach(collect);
-    }
-    collect(quoteRange.cloneContents());
-    out.quoteContent = content;
+    const out = { anchor: blk.dataset.id, key: math || media ? blk.dataset.id : zh.dataset.key, quote, prefix: text.slice(Math.max(0, s - 32), s), suffix: text.slice(e, e + 32) };
+    quoteRanges.set(out, { el, range: range.cloneRange() });
     if (math) out.math = true;
     if (PR.isEnEl(el)) out.side = "en";
     return out;
@@ -161,14 +141,14 @@
     const range = sel.getRangeAt(0);
     const startEl = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement;
     // 译文 .zh 和原文 .en 都能划：原文的记 side: "en"（只读原文没译的块，.zh 里排的就是英文）
-    const el = startEl && startEl.closest("#paper .zh, #paper .en, #paper .math-body");
+    let el = startEl && startEl.closest("#paper .zh, #paper .en, #paper .math-body, #paper .tbl-wrap");
     if (!el) return null;
     let parts;
     if (el.contains(range.endContainer)) parts = [partOf(el, range)];
     else {  // 跨段（#46）：起点在译文就取选中的每段译文，在原文就取原文，夹在中间的另一边不算
       const endEl = range.endContainer.nodeType === 1 ? range.endContainer : range.endContainer.parentElement;
       const textSide = el.classList.contains("math-body") ? endEl?.closest(".zh, .en") : el;
-      const same = (textSide?.classList.contains("en") ? "#paper .en" : "#paper .zh") + ", #paper .math-body";
+      const same = (textSide?.classList.contains("en") ? "#paper .en" : "#paper .zh") + ", #paper .math-body, #paper .tbl-wrap";
       parts = PR.$$(same).filter((x) => range.intersectsNode(x)).map((x) => partOf(x, range));
     }
     parts = parts.filter(Boolean);
@@ -223,11 +203,24 @@
 
   PR.selectionAction = function (kind, color) {
     if (!pendingSel) return;
-    const { anchor, key, quote, prefix, suffix, side, parts, rect, quoteContent } = pendingSel;
+    const selection = pendingSel;
+    const { anchor, key, quote, prefix, suffix, side, parts, rect } = selection;
     selbar().classList.remove("open");
     getSelection().removeAllRanges();
     pendingSel = null;
-    if (kind === "paper-note") { PR.openPaperNote(); PR.paperNoteEditor.insertSources(parts || [{ anchor, quote, quoteContent }]); return; }
+    if (kind === "paper-note") {
+      const seen = new Set();
+      const sources = (parts || [selection]).filter(part => {
+        const type = PR.blockById[part.anchor]?.type;
+        if (!['table', 'figure', 'math'].includes(type)) return true;
+        if (seen.has(part.anchor)) return false;
+        seen.add(part.anchor); return true;
+      }).map(part => {
+        const captured = quoteRanges.get(part);
+        return { ...part, quoteHTML: PR.capturePaperQuote(captured.el, captured.range) };
+      });
+      PR.openPaperNote(); PR.paperNoteEditor.insertSources(sources).catch(error => PR.toast(error.message)); return;
+    }
     if (kind === "translate") { PR.translateSelection({ anchor, quote, rect }); return; }
     if (kind === "en") { PR.toggleEn(anchor, true); return; }
     if (kind === "copy") { navigator.clipboard.writeText(quote).then(() => PR.toast(PR.t("已复制"))); return; }

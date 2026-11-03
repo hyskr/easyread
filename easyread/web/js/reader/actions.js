@@ -76,6 +76,7 @@
   function blockMenu(id, where) {
     const b = PR.blockById[id];
     const items = actionsFor(id).map((a) => ({ label: a.label, icon: a.icon, kbd: a.kbd, fn: a.fn }));
+    items.unshift({ label: PR.t("引用到论文笔记"), icon: "note", fn: () => PR.quotePaperBlock(id) });
     if (b?.type === "figure" && PR.store.mode === "server") items.push({label: PR.t("重新截取图片"), icon: "edit", fn: () => PR.cropFigure(id)});
     if (b?.type === "figure" && b.src && PR.store.mode === "server" && S.figure_images_enabled) items.push({label: PR.t("重新生成译图"), icon: "redo", fn: () => PR.generateFigureImages([id], true)});
     items.push("-",

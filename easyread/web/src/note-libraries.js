@@ -1,3 +1,5 @@
+import { DOMParser as ProseMirrorDOMParser } from '@tiptap/pm/model';
+import { mapFormula } from './note-map-math';
 import { exportXmind } from './note-xmind';
 import { Editor, Extension } from '@tiptap/core';
 import { Plugin } from '@tiptap/pm/state';
@@ -99,12 +101,8 @@ function createEditor({ element, content, onChange, onSelection, onMathClick }) 
   return instance;
 }
 
-function mapFormula(latex, display) {
-  const html = PR.tex(latex, display).replace(/<span class="katex-mathml">[\s\S]*?<\/span>/g, '');
-  return '<span class="pn-map-formula" role="math" aria-label="' + PR.esc(latex) + '">' + html + '</span>';
-}
 function inline(node) {
-  if (node.type === 'inlineMath') return mapFormula(node.attrs.latex, false);
+  if (node.type === 'inlineMath' || node.type === 'blockMath') return mapFormula(node.attrs.latex, false);
   if (node.type === 'hardBreak') return '<br>';
   if (node.type === 'image') {
     const { src, alt } = node.attrs, label = PR.esc(alt || PR.t('图片'));
@@ -200,4 +198,4 @@ function findMapNode(root, position) {
   return match;
 }
 
-PR.noteLibraries = { exportXmind, createEditor, Markmap, toMindMap, findMapNode, mountNoteToolbar, insertNoteImages };
+PR.noteLibraries = { parseQuote: (editor, element) => ProseMirrorDOMParser.fromSchema(editor.schema).parse(element).toJSON().content || [], exportXmind, createEditor, Markmap, toMindMap, findMapNode, mountNoteToolbar, insertNoteImages };
