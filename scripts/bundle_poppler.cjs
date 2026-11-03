@@ -74,7 +74,7 @@ function bundleMac(stage, sources) {
     const cellar = real.match(/^(.*\/Cellar\/([^/]+)\/[^/]+)\//); if (cellar) packages.set(cellar[2], cellar[1]);
     try { run('/usr/bin/codesign', ['--remove-signature', dest]); } catch { /* unsigned input */ }
     const arch = process.env.GOARCH || (process.arch === 'arm64' ? 'arm64' : 'amd64');
-    run('/usr/bin/lipo', ['-verify_arch', arch === 'amd64' ? 'x86_64' : arch, dest]);
+    run('/usr/bin/lipo', [dest, '-verify_arch', arch === 'amd64' ? 'x86_64' : arch]);
     const search = [...rpaths(real).map(v => v.replace('@loader_path', path.dirname(real)).replace('@executable_path', path.dirname(entry))), ...inherited];
     for (const dep of dependencies(real)) {
       if (systemLibrary(dep)) continue;
