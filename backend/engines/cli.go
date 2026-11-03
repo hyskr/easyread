@@ -96,6 +96,12 @@ func cliRun(ctx context.Context, cfg Object, prompt, cwd string, images []string
 	args := []string{}
 	stdin := prompt
 	env := os.Environ()
+	if engine == "codex" {
+		env, e = isolatedCodexHome(work, env)
+		if e != nil {
+			return "", nil, e
+		}
+	}
 	last := filepath.Join(work, "last.txt")
 	model := str(c["model"])
 	effort := str(c["reasoning_effort"])
