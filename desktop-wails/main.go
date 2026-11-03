@@ -108,6 +108,7 @@ func main() {
 			}
 			r.Body.Close()
 			bridge := `<script>
+window.addEventListener("keydown",e=>{if(e.key==="Escape"&&!e.isComposing)e.preventDefault()});
 const pending=new Map();let serial=0;
 function native(method,...args){return new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});window.top.postMessage({easyreadNative:true,id,method,args},'*')})}
 window.addEventListener('message',e=>{const d=e.data;if(d?.easyreadReply){const p=pending.get(d.id);if(p){pending.delete(d.id);d.error?p.reject(Error(d.error)):p.resolve(d.value)}}if(d?.easyreadOpen&&window.easyreadTabs)window.easyreadTabs.open(d.easyreadOpen);if(d?.easyreadSave&&window.easyreadTabs)window.easyreadTabs.saveAll().then(r=>{if(r.every(v=>v!==false))native('QuitSaved')})});
