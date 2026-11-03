@@ -39,7 +39,7 @@ export async function exportXmind(root, filename) {
         const PR = window.PR, hash = PR.state.paper.meta?.source_sha256;
         const query = new URLSearchParams(hash ? { sha256: hash } : { id: PR.pid });
         query.set('block', href.slice(1));
-        result.href = 'easyread://open?' + query;
+        result.href = (PR.deepLinkScheme || window.easyreadDesktop?.deepLinkScheme || 'easyread') + '://open?' + query;
       } else result.href = href;
     }
     if (node.children?.length) result.children = { attached: [...(result.children?.attached || []), ...node.children.map(topic)] };

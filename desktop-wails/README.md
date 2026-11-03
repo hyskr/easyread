@@ -17,6 +17,14 @@ python3 -m venv .venv
 
 ## 已知限制
 
-当前为 macOS arm64 体验版。自动更新尚未迁移；Windows/Linux 尚未打包。原生窗口与后端已构建启动，导入、AI 流式输出、导出、深链接及退出保存仍需完整交互回归，暂不作为 Electron 的正式替代版。请避免两个版本同时编辑同一篇论文。
+当前为 macOS arm64 体验版。Windows/Linux 尚未打包。macOS 支持窗口尺寸记忆、原生菜单、保存后打开文件、退出保存和后台任务退出拦截。GitHub Actions 在 Wails 分支构建签名包，推送 wails-v* 标签发布。应用启动时检查 Wails 发布，菜单可手动检查；安装更新前按当前固定签名校验包。本地临时签名版不启用自动安装。完整交互仍需继续回归。请避免两个版本同时编辑同一篇论文。
 
 手动同步流程见 [上游同步](../docs/upstream-sync.md)。不包含任何定时任务。
+
+## 来源链接
+
+Wails 导出使用 `easyread-wails://open?...`，Electron 继续使用 `easyread://`。安装 Wails 后重新导出 XMind，即可指向 Wails；旧文件不会自动更新。
+
+## 发布
+
+仓库 Secrets 需要 MAC_SIGN_P12 与 MAC_SIGN_P12_PASSWORD。推送 `wails-v1.4.7` 等标签后，Wails 工作流生成 DMG 和 ZIP 并发布到 hyskr/easyread。签名证书必须跨版本保持一致；更换证书后需手动安装。当前为固定自签名，不包含 Apple 公证。
