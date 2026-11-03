@@ -220,7 +220,9 @@ func (a *App) menus() *menu.Menu {
 	app.AddText("退出", keys.CmdOrCtrl("q"), func(*menu.CallbackData) { a.requestQuit() })
 	m.Append(menu.EditMenu())
 	file := m.AddSubmenu("文件")
-	file.AddText("文献库", keys.CmdOrCtrl("l"), func(*menu.CallbackData) { wr.WindowExecJS(a.ctx, `document.querySelector("iframe").contentWindow.postMessage({easyreadLibrary:true},"*")`) })
+	file.AddText("文献库", keys.CmdOrCtrl("l"), func(*menu.CallbackData) {
+		wr.WindowExecJS(a.ctx, `document.querySelector("iframe").contentWindow.postMessage({easyreadLibrary:true},"*")`)
+	})
 	file.AddText("关闭当前标签页", keys.CmdOrCtrl("w"), func(*menu.CallbackData) {
 		wr.WindowExecJS(a.ctx, `document.querySelector('iframe').contentWindow.postMessage({easyreadCloseTab:true},'*')`)
 	})

@@ -15,7 +15,7 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-var version = "1.4.6"
+var version = "1.4.8"
 
 func (a *App) CheckUpdate(manual bool) {
 	if !a.updating.CompareAndSwap(false, true) {

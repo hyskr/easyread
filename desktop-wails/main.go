@@ -70,6 +70,23 @@ func main() {
 	if err = cmd.Start(); err != nil {
 		panic(err)
 	}
+	done := make(chan struct{})
+	go func() { cmd.Wait(); close(done) }()
+	cleanup := func() {
+		select {
+		case <-done:
+			return
+		default:
+		}
+		syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
+		select {
+		case <-done:
+		case <-time.After(5 * time.Second):
+			syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+			<-done
+		}
+	}
+	defer cleanup()
 	ready := make(chan string, 1)
 	go func() {
 		s := bufio.NewScanner(pipe)
@@ -149,29 +166,28 @@ const originalClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototyp
 		w.Header().Set("Content-Type", "text/html")
 		io.WriteString(w, host)
 	})
-	err = wails.Run(&options.App{Title: "EasyRead Wails", Width: state.Width, Height: state.Height, MinWidth: 700, MinHeight: 500, AssetServer: &assetserver.Options{Handler: nativeHandler}, OnStartup: app.startup, Menu: app.menus(), Mac: &mac.Options{OnUrlOpen: app.OpenLink}, OnDomReady: func(ctx context.Context) {
+	err = wails.Run(&options.App{Title: "EasyRead Wails", Width: state.Width, Height: state.Height, MinWidth: 700, MinHeight: 500, AssetServer: &assetserver.Options{Handler: nativeHandler}, OnStartup: app.startup, Menu: app.menus(), SingleInstanceLock: &options.SingleInstanceLock{UniqueId: "com.hyskr.easyread.wails", OnSecondInstanceLaunch: func(data options.SecondInstanceData) {
+		wr.WindowShow(app.ctx)
+		for _, arg := range data.Args {
+			app.OpenLink(arg)
+		}
+	}}, Mac: &mac.Options{OnUrlOpen: app.OpenLink}, OnDomReady: func(ctx context.Context) {
 		if state.Maximized {
 			wr.WindowMaximise(ctx)
 		}
 		go app.CheckUpdate(false)
 	}, OnBeforeClose: func(context.Context) bool {
+
 		if app.closing.Load() {
 			return false
 		}
 		wr.WindowExecJS(app.ctx, `document.querySelector("iframe").contentWindow.postMessage({easyreadSave:true},"*")`)
 		return true
 	}, OnShutdown: func(context.Context) {
-		done := make(chan error, 1)
-		go func() { done <- cmd.Wait() }()
 		select {
 		case <-done:
-		case <-time.After(8 * time.Second):
-			syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
-			select {
-			case <-done:
-			case <-time.After(2 * time.Second):
-				syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-			}
+		case <-time.After(3 * time.Second):
+			cleanup()
 		}
 	}, Bind: []interface{}{app}})
 	if err != nil {
