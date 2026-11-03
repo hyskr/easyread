@@ -197,7 +197,8 @@ const originalClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototyp
 	defer server.Close()
 	pageURL := "http://" + listener.Addr().String() + "/web/tabs.html"
 	pageJSON, _ := json.Marshal(pageURL)
-	host := `<!doctype html><html><head><style>html,body,iframe{margin:0;border:0;width:100%;height:100%;overflow:hidden}</style></head><body><iframe id="app"></iframe><script>
+	host := `<!doctype html><html><head><style>html,body,iframe{margin:0;border:0;width:100%;height:100%;overflow:hidden}</style></head><body><iframe id="app"></iframe><aside id="update-status" role="status" hidden style="position:fixed;right:18px;bottom:18px;width:300px;max-width:85vw;background:#fbfaf6;color:#23211d;border:1px solid #d3cbbb;border-radius:10px;padding:14px;font:13px/1.6 -apple-system,sans-serif;box-shadow:0 4px 20px #0002;z-index:9999"><button onclick="this.parentElement.hidden=true" aria-label="关闭更新提示" style="float:right;border:0;background:none;cursor:pointer">×</button><div id="update-message"></div><progress id="update-meter" style="width:100%"></progress><div id="update-bytes"></div></aside><script>
+window.showUpdateProgress=s=>{const box=document.querySelector('#update-status');box.hidden=false;document.querySelector('#update-message').textContent=s.message;const meter=document.querySelector('#update-meter');if(s.total>0){meter.max=s.total;meter.value=s.received}else meter.removeAttribute('value');document.querySelector('#update-bytes').textContent=s.total>0?Math.floor(s.received/s.total*100)+'% · '+(s.received/1048576).toFixed(1)+' / '+(s.total/1048576).toFixed(1)+' MB':s.received>0?(s.received/1048576).toFixed(1)+' MB':'';meter.hidden=!s.message.includes('下载')};
 document.addEventListener("contextmenu",e=>e.preventDefault());
  const app=document.querySelector('iframe');app.src=` + string(pageJSON) + `;
  window.addEventListener('message',async e=>{const d=e.data;if(!d?.easyreadNative||e.origin!==new URL(app.src).origin)return;

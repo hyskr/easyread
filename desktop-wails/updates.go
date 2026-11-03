@@ -15,14 +15,37 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-var version = "1.4.15"
+var version = "1.4.16"
+
+type downloadProgress struct {
+	app             *App
+	total, received int64
+	last            time.Time
+}
+
+func (p *downloadProgress) Write(b []byte) (int, error) {
+	p.received += int64(len(b))
+	if time.Since(p.last) > 200*time.Millisecond || p.received == p.total {
+		p.last = time.Now()
+		p.app.updateProgress("正在下载更新", p.received, p.total)
+	}
+	return len(b), nil
+}
+func (a *App) updateProgress(message string, received, total int64) {
+	data, _ := json.Marshal(map[string]any{"message": message, "received": received, "total": total})
+	wr.WindowExecJS(a.ctx, "window.showUpdateProgress?.("+string(data)+")")
+}
 
 func (a *App) CheckUpdate(manual bool) {
 	if !a.updating.CompareAndSwap(false, true) {
 		return
 	}
 	defer a.updating.Store(false)
+	if manual {
+		a.updateProgress("正在检查更新", 0, 0)
+	}
 	fail := func(e error) {
+		a.updateProgress("更新失败："+e.Error(), 0, 0)
 		wr.MessageDialog(a.ctx, wr.MessageDialogOptions{Type: wr.ErrorDialog, Title: "更新失败", Message: e.Error()})
 	}
 	client := &http.Client{Timeout: 3 * time.Minute}
@@ -72,12 +95,16 @@ func (a *App) CheckUpdate(manual bool) {
 	}
 	if asset == "" {
 		if manual {
+			a.updateProgress("当前已是最新版本", 0, 0)
+		}
+		if manual {
 			wr.MessageDialog(a.ctx, wr.MessageDialogOptions{Title: "检查更新", Message: "当前已是最新的 Wails 版本。"})
 		}
 		return
 	}
 	answer, _ := wr.MessageDialog(a.ctx, wr.MessageDialogOptions{Title: "发现新版本", Message: "EasyRead Wails " + newVersion, Buttons: []string{"下载并安装", "稍后"}, DefaultButton: "下载并安装"})
 	if answer != "下载并安装" {
+		a.updateProgress("已取消更新", 0, 0)
 		return
 	}
 	binary, _ := os.Executable()
@@ -104,6 +131,8 @@ func (a *App) CheckUpdate(manual bool) {
 			os.RemoveAll(dir)
 		}
 	}()
+	a.updateProgress("正在连接下载服务器", 0, 0)
+	client.Timeout = 30 * time.Minute
 	r, err := client.Get(asset)
 	if err != nil {
 		fail(err)
@@ -120,16 +149,20 @@ func (a *App) CheckUpdate(manual bool) {
 		fail(err)
 		return
 	}
-	_, err = io.Copy(file, r.Body)
+	progress := &downloadProgress{app: a, total: r.ContentLength}
+	a.updateProgress("正在下载更新", 0, r.ContentLength)
+	_, err = io.Copy(file, io.TeeReader(r.Body, progress))
 	file.Close()
 	if err != nil {
 		fail(err)
 		return
 	}
+	a.updateProgress("正在解压更新", 0, 0)
 	if output, err := exec.Command("ditto", "-x", "-k", zipPath, dir).CombinedOutput(); err != nil {
 		fail(fmt.Errorf("解压失败：%s", output))
 		return
 	}
+	a.updateProgress("正在验证更新签名", 0, 0)
 	updated := filepath.Join(dir, "EasyRead Wails.app")
 	if output, err := exec.Command("codesign", "--verify", "--deep", "--strict", "-R", strings.TrimSpace(parts[1]), updated).CombinedOutput(); err != nil {
 		fail(fmt.Errorf("更新包签名不匹配：%s", output))
@@ -141,6 +174,7 @@ func (a *App) CheckUpdate(manual bool) {
 	a.installTarget = current
 	a.installMu.Unlock()
 	keep = true
+	a.updateProgress("正在保存笔记，准备安装", 0, 0)
 	a.requestQuit()
 }
 func (a *App) launchInstaller() error {
