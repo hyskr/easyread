@@ -2,13 +2,13 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 npm run build:editor
-.venv/bin/python scripts/build_backend.py
-.venv/bin/python scripts/wails_icon.py
+node scripts/build_backend.cjs
+go run scripts/wails_icon.go
 cd desktop-wails
 CGO_LDFLAGS='-framework UniformTypeIdentifiers' go build -ldflags "-X main.version=${WAILS_VERSION:-1.4.11}" -tags production -o 'build/bin/EasyRead Wails.app/Contents/MacOS/EasyRead Wails' .
 app='build/bin/EasyRead Wails.app'
 mkdir -p "$app/Contents/Resources/backend"
-cp ../build/backend/easyread-backend "$app/Contents/Resources/backend/"
+cp -R ../build/backend/. "$app/Contents/Resources/backend/"
 cp build/darwin/Info.plist "$app/Contents/Info.plist"
 iconset=$(mktemp -d)/icon.iconset
 mkdir -p "$iconset"

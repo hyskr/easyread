@@ -9,6 +9,7 @@
     "dev": "electron .",
     "start": "electron .",
     "build:editor": "node scripts/build_note_editor.cjs",
+    "build:backend:go": "node scripts/build_backend.cjs",
     "build:backend": "python scripts/build_backend.py",
     "dist": "npm run build:editor && npm run build:backend && electron-builder --publish never"
   },

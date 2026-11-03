@@ -65,11 +65,15 @@ func main() {
 	cmd := exec.Command(backend, "serve", "--port", "0")
 	cmd.Dir = home
 	if root := os.Getenv("EASYREAD_WAILS_DEV_ROOT"); root != "" {
-		cmd = exec.Command(filepath.Join(root, ".venv", "bin", "python"), "-m", "easyread", "serve", "--port", "0")
+		cmd = exec.Command(filepath.Join(root, "build", "backend", "easyread-backend"), "serve", "--port", "0", "--web-root", filepath.Join(root, "easyread", "web"))
 		cmd.Dir = root
 	}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	cmd.Env = append(os.Environ(), "PYTHONUNBUFFERED=1", "EASYREAD_HOME="+filepath.Join(home, "EasyRead"))
+	dataHome := os.Getenv("EASYREAD_HOME")
+	if dataHome == "" {
+		dataHome = filepath.Join(home, "EasyRead")
+	}
+	cmd.Env = append(os.Environ(), "EASYREAD_HOME="+dataHome)
 	pipe, err := cmd.StdoutPipe()
 	if err != nil {
 		panic(err)

@@ -1,15 +1,14 @@
 # EasyRead Wails
 
-macOS Apple Silicon 体验版，使用 Wails 2 与系统 WebKit，复用 EasyRead Python 后端和前端。独立应用名为 EasyRead Wails；默认使用 ~/EasyRead 数据。
+macOS Apple Silicon 体验版，使用 Wails 2 与系统 WebKit，复用 EasyRead 前端并使用原生 Go 后端。独立应用名为 EasyRead Wails；默认使用 ~/EasyRead 数据。
 
 ## 构建
 
-安装 Go、Xcode Command Line Tools、Node.js 与 Python 后，在仓库根目录执行：
+安装 Go、Xcode Command Line Tools、Node.js 与 Poppler 后，在仓库根目录执行：
 
 ```sh
 npm ci
-python3 -m venv .venv
-.venv/bin/python -m pip install . pyinstaller
+brew install poppler
 ./scripts/build_wails.sh
 ```
 
@@ -31,4 +30,4 @@ Wails 导出使用 `easyread-wails://open?...`，Electron 继续使用 `easyread
 
 ## 本地源码试用
 
-`EASYREAD_WAILS_DEV_ROOT` 可设为仓库绝对路径。此时使用仓库 .venv 的 Python 启动源码后端，刷新页面即可查看 js/reader、CSS、HTML 改动；修改 web/src 后仍需 npm run build:editor。数据继续使用 ~/EasyRead，不需要重复生成 DMG。
+`EASYREAD_WAILS_DEV_ROOT` 可设为仓库绝对路径。此时使用 build/backend/easyread-backend 启动 Go 后端，通过 --web-root 加载源码前端，刷新页面即可查看 js/reader、CSS、HTML 改动；修改 web/src 后仍需 npm run build:editor。数据继续使用 ~/EasyRead，不需要重复生成 DMG。

@@ -1,0 +1,436 @@
+[
+  {
+    "id": "deepseek",
+    "region": "cn",
+    "name": "DeepSeek",
+    "base_url": "https://api.deepseek.com",
+    "model": "deepseek-flash",
+    "key": true,
+    "free": false,
+    "models": [
+      {
+        "id": "deepseek-flash",
+        "name": "DeepSeek V4.1 Flash",
+        "tag": "便宜、能看图",
+        "vision": true
+      },
+      {
+        "id": "deepseek-v4-pro",
+        "name": "DeepSeek V4 Pro",
+        "tag": "更强，不能看图",
+        "vision": false
+      }
+    ],
+    "key_url": "https://platform.deepseek.com/api_keys",
+    "note": "开源模型的官方接口，一篇 20 页论文几毛钱。"
+  },
+  {
+    "id": "zhipu",
+    "region": "cn",
+    "name": "智谱",
+    "base_url": "https://open.bigmodel.cn/api/paas/v4",
+    "model": "glm-4.7-flash",
+    "key": true,
+    "free": true,
+    "models": [
+      {
+        "id": "glm-4.7-flash",
+        "name": "GLM-4.7-Flash",
+        "tag": "免费",
+        "vision": false
+      },
+      {
+        "id": "glm-4.6v-flash",
+        "name": "GLM-4.6V-Flash",
+        "tag": "免费、能看图",
+        "vision": true
+      },
+      {
+        "id": "glm-5.3-flash",
+        "name": "GLM-5.3-Flash",
+        "tag": "付费、能看图",
+        "vision": true
+      },
+      {
+        "id": "glm-5.3",
+        "name": "GLM-5.3",
+        "tag": "付费、最强",
+        "vision": false
+      }
+    ],
+    "key_url": "https://open.bigmodel.cn/usercenter/apikeys",
+    "note": "GLM-4.7-Flash、GLM-4.6V-Flash 免费。"
+  },
+  {
+    "id": "dashscope",
+    "region": "cn",
+    "name": "阿里云百炼（通义千问）",
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "model": "qwen3.8-flash",
+    "key": true,
+    "free": false,
+    "models": [
+      {
+        "id": "qwen3.8-flash",
+        "name": "Qwen3.8-Flash",
+        "tag": "便宜、能看图",
+        "vision": true
+      },
+      {
+        "id": "qwen3.7-plus",
+        "name": "Qwen3.7-Plus",
+        "tag": "均衡、能看图",
+        "vision": true
+      },
+      {
+        "id": "qwen3.8-max",
+        "name": "Qwen3.8-Max",
+        "tag": "最强、能看图",
+        "vision": true
+      }
+    ],
+    "key_url": "https://bailian.console.aliyun.com/?apiKey=1",
+    "note": "新用户有免费额度。"
+  },
+  {
+    "id": "moonshot",
+    "region": "cn",
+    "name": "Kimi",
+    "base_url": "https://api.moonshot.cn/v1",
+    "model": "kimi-k3",
+    "key": true,
+    "free": false,
+    "models": [
+      {
+        "id": "kimi-k3",
+        "name": "Kimi K3",
+        "tag": "能看图",
+        "vision": true
+      },
+      {
+        "id": "kimi-k2.6",
+        "name": "Kimi K2.6",
+        "tag": "能看图",
+        "vision": true
+      }
+    ],
+    "key_url": "https://platform.moonshot.cn/console/api-keys",
+    "note": "月之暗面的官方接口。"
+  },
+  {
+    "id": "siliconflow",
+    "region": "cn",
+    "name": "硅基流动",
+    "base_url": "https://api.siliconflow.cn/v1",
+    "model": "Qwen/Qwen3-8B",
+    "key": true,
+    "free": true,
+    "models": [
+      {
+        "id": "Qwen/Qwen3-8B",
+        "name": "Qwen3 8B",
+        "tag": "免费",
+        "vision": false
+      },
+      {
+        "id": "Qwen/Qwen3.5-4B",
+        "name": "Qwen3.5 4B",
+        "tag": "免费",
+        "vision": false
+      },
+      {
+        "id": "THUDM/GLM-4-9B-0414",
+        "name": "GLM-4 9B",
+        "tag": "免费",
+        "vision": false
+      },
+      {
+        "id": "deepseek-ai/DeepSeek-V4-Flash",
+        "name": "DeepSeek V4 Flash",
+        "tag": "付费",
+        "vision": false
+      },
+      {
+        "id": "zai-org/GLM-5.3",
+        "name": "GLM-5.3",
+        "tag": "付费",
+        "vision": false
+      }
+    ],
+    "key_url": "https://cloud.siliconflow.cn/account/ak",
+    "note": "托管各家开源模型，小模型免费、大模型付费。"
+  },
+  {
+    "id": "modelscope",
+    "region": "cn",
+    "name": "魔搭 ModelScope",
+    "base_url": "https://api-inference.modelscope.cn/v1",
+    "model": "Qwen/Qwen3.8-27B",
+    "key": true,
+    "free": true,
+    "models": [
+      {
+        "id": "Qwen/Qwen3.8-27B",
+        "name": "Qwen3.8 27B",
+        "tag": "",
+        "vision": false
+      },
+      {
+        "id": "Qwen/Qwen3.5-122B-A10B",
+        "name": "Qwen3.5 122B",
+        "tag": "",
+        "vision": false
+      },
+      {
+        "id": "deepseek-ai/DeepSeek-V4.1-Flash",
+        "name": "DeepSeek V4.1 Flash",
+        "tag": "",
+        "vision": false
+      },
+      {
+        "id": "ZhipuAI/GLM-5.2",
+        "name": "GLM-5.2",
+        "tag": "",
+        "vision": false
+      }
+    ],
+    "key_url": "https://modelscope.cn/my/myaccesstoken",
+    "note": "阿里的开源模型社区，每天有免费调用次数（要绑定阿里云账号）。"
+  },
+  {
+    "id": "openai",
+    "region": "intl",
+    "name": "OpenAI",
+    "base_url": "https://api.openai.com/v1",
+    "model": "gpt-6-luna",
+    "key": true,
+    "free": false,
+    "api": "responses",
+    "models": [
+      {
+        "id": "gpt-6-luna",
+        "name": "GPT-6 Luna",
+        "tag": "最便宜",
+        "vision": true
+      },
+      {
+        "id": "gpt-6.1-sol",
+        "name": "GPT-6.1 Sol",
+        "tag": "均衡",
+        "vision": true
+      },
+      {
+        "id": "gpt-6-astra",
+        "name": "GPT-6 Astra",
+        "tag": "最强",
+        "vision": true
+      }
+    ],
+    "key_url": "https://platform.openai.com/api-keys",
+    "note": "用 Responses 接口。"
+  },
+  {
+    "id": "anthropic",
+    "region": "intl",
+    "name": "Anthropic",
+    "base_url": "https://api.anthropic.com/v1",
+    "model": "claude-sonnet-5-5",
+    "key": true,
+    "free": false,
+    "models": [
+      {
+        "id": "claude-sonnet-5-5",
+        "name": "Claude Sonnet 5.5",
+        "tag": "均衡",
+        "vision": true
+      },
+      {
+        "id": "claude-opus-5-5",
+        "name": "Claude Opus 5.5",
+        "tag": "更强",
+        "vision": true
+      },
+      {
+        "id": "claude-haiku-4-5",
+        "name": "Claude Haiku 4.5",
+        "tag": "最快最省",
+        "vision": true
+      },
+      {
+        "id": "claude-fable-5-1",
+        "name": "Claude Fable 5.1",
+        "tag": "最强、最贵",
+        "vision": true
+      }
+    ],
+    "key_url": "https://platform.claude.com/settings/keys",
+    "note": "Claude 的 API（按量付费，和 Claude 订阅是两回事；有订阅就用上面的 Claude Code）。"
+  },
+  {
+    "id": "gemini",
+    "region": "intl",
+    "name": "Google Gemini",
+    "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "model": "gemini-3.8-flash",
+    "key": true,
+    "free": true,
+    "models": [
+      {
+        "id": "gemini-3.8-flash",
+        "name": "Gemini 3.8 Flash",
+        "tag": "有免费额度、能看图",
+        "vision": true
+      },
+      {
+        "id": "gemini-3.5-flash-lite",
+        "name": "Gemini 3.5 Flash-Lite",
+        "tag": "有免费额度、最快",
+        "vision": true
+      },
+      {
+        "id": "gemini-3.1-pro-preview",
+        "name": "Gemini 3.1 Pro",
+        "tag": "付费、最强",
+        "vision": true
+      }
+    ],
+    "key_url": "https://aistudio.google.com/apikey",
+    "note": "Flash 系列有免费额度。"
+  },
+  {
+    "id": "openrouter",
+    "region": "intl",
+    "name": "OpenRouter",
+    "base_url": "https://openrouter.ai/api/v1",
+    "model": "qwen/qwen3.8-27b:free",
+    "key": true,
+    "free": true,
+    "models": [
+      {
+        "id": "qwen/qwen3.8-27b:free",
+        "name": "Qwen3.8 27B",
+        "tag": "免费",
+        "vision": false
+      },
+      {
+        "id": "google/gemma-4-31b-it:free",
+        "name": "Gemma 4 31B",
+        "tag": "免费",
+        "vision": false
+      },
+      {
+        "id": "nvidia/nemotron-3-super-120b-a12b:free",
+        "name": "Nemotron 3 Super",
+        "tag": "免费",
+        "vision": false
+      }
+    ],
+    "key_url": "https://openrouter.ai/keys",
+    "note": "一个 Key 用各家模型；带 :free 的免费，有频率限制，名单常变，点“获取模型列表”看最新的。"
+  },
+  {
+    "id": "groq",
+    "region": "intl",
+    "name": "Groq",
+    "base_url": "https://api.groq.com/openai/v1",
+    "model": "openai/gpt-oss-120b",
+    "key": true,
+    "free": true,
+    "models": [
+      {
+        "id": "openai/gpt-oss-120b",
+        "name": "GPT-OSS 120B",
+        "tag": "免费额度",
+        "vision": false
+      },
+      {
+        "id": "qwen/qwen3.8-27b",
+        "name": "Qwen3.8 27B",
+        "tag": "免费额度、预览",
+        "vision": false
+      },
+      {
+        "id": "llama-3.3-70b-versatile",
+        "name": "Llama 3.3 70B",
+        "tag": "免费额度",
+        "vision": false
+      }
+    ],
+    "key_url": "https://console.groq.com/keys",
+    "note": "开源模型、速度很快；有每分钟频率限制，“同时翻译几批”开 1–2。"
+  },
+  {
+    "id": "cerebras",
+    "region": "intl",
+    "name": "Cerebras",
+    "base_url": "https://api.cerebras.ai/v1",
+    "model": "gpt-oss-120b",
+    "key": true,
+    "free": true,
+    "models": [
+      {
+        "id": "gpt-oss-120b",
+        "name": "GPT-OSS 120B",
+        "tag": "免费额度",
+        "vision": false
+      },
+      {
+        "id": "qwen-3.8-27b",
+        "name": "Qwen3.8 27B",
+        "tag": "免费额度",
+        "vision": false
+      }
+    ],
+    "key_url": "https://cloud.cerebras.ai",
+    "note": "开源模型、速度很快。"
+  },
+  {
+    "id": "ollama",
+    "region": "local",
+    "name": "Ollama",
+    "base_url": "http://127.0.0.1:11434/v1",
+    "model": "qwen3.5:9b",
+    "key": false,
+    "free": true,
+    "models": [
+      {
+        "id": "qwen3.5:9b",
+        "name": "Qwen3.5 9B",
+        "tag": "下载 6.6 GB，推荐",
+        "vision": false
+      },
+      {
+        "id": "qwen3.5:4b",
+        "name": "Qwen3.5 4B",
+        "tag": "下载 3.4 GB，显卡小用",
+        "vision": false
+      },
+      {
+        "id": "qwen3.5:27b",
+        "name": "Qwen3.5 27B",
+        "tag": "下载 17 GB，译得更好",
+        "vision": false
+      },
+      {
+        "id": "gemma4:12b",
+        "name": "Gemma 4 12B",
+        "tag": "",
+        "vision": false
+      }
+    ],
+    "key_url": "https://ollama.com/download",
+    "note": "装好 Ollama，再在终端运行 ollama pull qwen3.5:9b。完全离线、免费。"
+  },
+  {
+    "id": "lmstudio",
+    "region": "local",
+    "name": "LM Studio",
+    "base_url": "http://127.0.0.1:1234/v1",
+    "model": "",
+    "key": false,
+    "free": true,
+    "models": [],
+    "key_url": "https://lmstudio.ai",
+    "note": "在 LM Studio 里下载模型，打开 Developer → Start Server，再点“获取模型列表”选一个。"
+  }
+]

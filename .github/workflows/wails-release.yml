@@ -4,7 +4,7 @@ on:
   push:
     tags: ['wails-v*']
     branches: ['feat/wails-desktop']
-    paths: ['desktop-wails/**', 'scripts/build_wails.sh', '.github/workflows/wails-release.yml']
+    paths: ['desktop-wails/**', 'backend/**', 'easyread/web/**', 'scripts/build_wails.sh', 'scripts/build_backend.cjs', 'scripts/bundle_poppler.cjs', '.github/workflows/wails-release.yml']
 permissions:
   contents: write
 jobs:
@@ -16,16 +16,18 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.23'
-          cache-dependency-path: desktop-wails/go.sum
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+          cache-dependency-path: |
+            desktop-wails/go.sum
+            backend/go.sum
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts
-      - run: python -m venv .venv && .venv/bin/python -m pip install . pyinstaller
+      - run: brew install poppler
+      - name: Test Go backend
+        working-directory: backend
+        run: go test ./...
       - name: Test native desktop helpers
         working-directory: desktop-wails
         run: CGO_LDFLAGS='-framework UniformTypeIdentifiers' go test ./...
@@ -36,6 +38,8 @@ jobs:
         env:
           MAC_SIGN_P12: ${{ secrets.MAC_SIGN_P12 }}
           MAC_SIGN_P12_PASSWORD: ${{ secrets.MAC_SIGN_P12_PASSWORD }}
+      - name: Native PDF and persistence smoke test
+        run: EASYREAD_PDF_BIN="$PWD/build/backend/bin" node tests/backend/native-smoke.cjs
       - name: Package
         run: |
           mkdir -p release/staging
