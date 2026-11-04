@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     tags: ['wails-v*']
-    branches: ['feat/wails-desktop']
+    branches: ['main', 'feat/wails-desktop']
     paths: ['desktop-wails/**', 'backend/**', 'easyread/web/**', 'scripts/build_wails.sh', 'scripts/build_backend.cjs', 'scripts/bundle_poppler.cjs', '.github/workflows/wails-release.yml']
 permissions:
   contents: write
