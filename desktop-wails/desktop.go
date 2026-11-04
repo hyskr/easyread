@@ -200,6 +200,10 @@ func (a *App) stopService() error {
 func (a *App) menus() *menu.Menu {
 	m := menu.NewMenu()
 	app := m.AddSubmenu("EasyRead Wails")
+	app.AddText("关于 EasyRead Wails", nil, func(*menu.CallbackData) {
+		wr.MessageDialog(a.ctx, wr.MessageDialogOptions{Type: wr.InfoDialog, Title: "EasyRead Wails", Message: "当前版本 " + version + "\nGo 后端 · macOS Apple Silicon"})
+	})
+	app.AddSeparator()
 	app.AddText("检查更新…", nil, func(*menu.CallbackData) { go a.CheckUpdate(true) })
 	app.AddSeparator()
 	app.AddText("退出", keys.CmdOrCtrl("q"), func(*menu.CallbackData) { a.requestQuit() })

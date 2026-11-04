@@ -98,11 +98,11 @@ func (a *App) CheckUpdate(manual bool) {
 			a.updateProgress("当前已是最新版本", 0, 0)
 		}
 		if manual {
-			wr.MessageDialog(a.ctx, wr.MessageDialogOptions{Title: "检查更新", Message: "当前已是最新的 Wails 版本。"})
+			wr.MessageDialog(a.ctx, wr.MessageDialogOptions{Title: "检查更新", Message: "当前版本 " + version + "，已是最新的 Wails 版本。"})
 		}
 		return
 	}
-	answer, _ := wr.MessageDialog(a.ctx, wr.MessageDialogOptions{Title: "发现新版本", Message: "EasyRead Wails " + newVersion, Buttons: []string{"下载并安装", "稍后"}, DefaultButton: "下载并安装"})
+	answer, _ := wr.MessageDialog(a.ctx, wr.MessageDialogOptions{Title: "发现新版本", Message: "当前版本 " + version + "\n可更新至 " + newVersion, Buttons: []string{"下载并安装", "稍后"}, DefaultButton: "下载并安装"})
 	if answer != "下载并安装" {
 		a.updateProgress("已取消更新", 0, 0)
 		return

@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 cd "$(dirname "$0")/.."
+export WAILS_VERSION="${WAILS_VERSION:-1.4.18}"
 npm run build:editor
 node scripts/build_backend.cjs
 go run scripts/wails_icon.go
