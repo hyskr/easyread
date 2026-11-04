@@ -38,6 +38,7 @@ func TestConcurrentLanesAndMissingPageRetry(t *testing.T) {
 	defer func() { Run = old }()
 	var active, maxActive atomic.Int32
 	var calls atomic.Int32
+	bothStarted := make(chan struct{})
 	Run = func(ctx context.Context, cfg Object, prompt, cwd string, images []string) (string, Object, error) {
 		a := active.Add(1)
 		defer active.Add(-1)
@@ -47,8 +48,17 @@ func TestConcurrentLanesAndMissingPageRetry(t *testing.T) {
 				break
 			}
 		}
-		calls.Add(1)
-		time.Sleep(20 * time.Millisecond)
+		number := calls.Add(1)
+		if number == 2 {
+			close(bothStarted)
+		}
+		if number <= 2 {
+			select {
+			case <-bothStarted:
+			case <-time.After(5 * time.Second):
+				return "", nil, fmt.Errorf("translation lanes did not overlap")
+			}
+		}
 		matches := regexp.MustCompile(`===== PAGE (\d+) =====`).FindAllStringSubmatch(prompt, -1)
 		blocks := []any{}
 		for _, match := range matches {

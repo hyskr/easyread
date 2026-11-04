@@ -99,6 +99,24 @@ func Missing(ws *store.Workspace, pages []int, data Object) []int {
 			refs = n
 		}
 	}
+	if refs > 0 && len(List(data["references"])) == 0 {
+		lost := []int{}
+		for _, page := range pages {
+			if page < refs {
+				continue
+			}
+			source := sourceText(ws.Root, page)
+			if heading := refHeading.FindStringIndex(source); heading != nil {
+				source = source[heading[1]:]
+			}
+			if len([]rune(letters(source))) >= 80 {
+				lost = append(lost, page)
+			}
+		}
+		if len(lost) > 0 {
+			return lost
+		}
+	}
 	if len(List(data["references"])) > 0 && refs == 0 {
 		return nil
 	}

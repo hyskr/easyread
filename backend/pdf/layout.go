@@ -76,6 +76,9 @@ func loadStream(root string, page int) (stream, error) {
 	}
 	return s, nil
 }
+
+var printedLink = regexp.MustCompile(`\[((?:\\.|[^\]\\\n])*)\]\([^)\s]*\)`)
+
 func english(b map[string]any) string {
 	key := "en"
 	if b["type"] == "figure" || b["type"] == "table" {
@@ -92,10 +95,10 @@ func english(b map[string]any) string {
 				}
 			}
 		}
-		return strings.Join(s, " ")
+		return printedLink.ReplaceAllString(strings.Join(s, " "), "$1")
 	}
 	s, _ := b[key].(string)
-	return s
+	return printedLink.ReplaceAllString(s, "$1")
 }
 func indexRunes(hay, needle []rune, start int) int {
 	if len(needle) == 0 {

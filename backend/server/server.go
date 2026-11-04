@@ -372,6 +372,13 @@ func (a *App) get(w http.ResponseWriter, r *http.Request) error {
 			return e
 		}
 		switch parts[1] {
+		case "citations":
+			graph, err := a.Library.CitationGraph(ws.ID())
+			if err != nil {
+				return err
+			}
+			response(w, 200, graph)
+			return nil
 		case "state":
 			if a.Status() == "idle" {
 				item, e := ws.Load("item")
@@ -490,6 +497,9 @@ func (a *App) get(w http.ResponseWriter, r *http.Request) error {
 func (a *App) post(w http.ResponseWriter, r *http.Request) error {
 	p := r.URL.Path
 	q := r.URL.Query()
+	if strings.HasPrefix(p, "/api/p/") && (strings.HasSuffix(p, "/citation-import") || strings.HasSuffix(p, "/citation-import-pdf")) {
+		return a.importCitation(w, r)
+	}
 	if p == "/api/import" {
 		r.Body = http.MaxBytesReader(w, r.Body, MaxUpload)
 		b, e := io.ReadAll(r.Body)

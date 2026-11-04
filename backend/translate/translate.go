@@ -17,6 +17,7 @@ import (
 	"unicode/utf16"
 
 	"github.com/hyskr/easyread/backend/engines"
+	"github.com/hyskr/easyread/backend/pdf"
 	"github.com/hyskr/easyread/backend/store"
 )
 
@@ -567,7 +568,8 @@ func mergeWithPages(ws *store.Workspace, data, baseline Object, done, pages []in
 	})
 }
 func mergeExtras(p, data, baseline Object) {
-	for key, ident := range map[string]string{"glossary": "en", "references": "id"} {
+	p["references"] = mergeReferences(List(p["references"]), List(data["references"]))
+	for key, ident := range map[string]string{"glossary": "en"} {
 		have := map[string]bool{}
 		items := List(p[key])
 		for _, x := range items {
@@ -752,7 +754,7 @@ func Fill(ws *store.Workspace, data, baseline, todo Object, pages []int) error {
 	return nil
 }
 
-const schema = `Return ONLY valid JSON. Use {"meta":{"title_en":"","title_zh":"","short_zh":""},"blocks":[],"glossary":[{"en":"term","zh":"translation"}],"references":[{"id":"1","text":"original reference"}]}. Each block has a stable id, type, and page (original PDF page number). Allowed types: heading (en,zh,level,num), para (en,zh), list (ordered,items:[{en,zh}]), math (tex,tag), table (head and rows MUST be two-dimensional arrays, caption_en,caption_zh), figure (box:[x0,y0,x1,y1] normalized 0..1,image_en,image_zh,caption_en,caption_zh), references. Use original reading order, read columns in order. Preserve all content, citations, links, footnotes, equations and numeric values. Never summarize. Footnotes are para blocks with role=footnote and num. Keep display math in math blocks and inline math in $TeX$, escape JSON backslashes. Code is a para with fenced code, never insert sentence markers in code or math. Insert ‖ at matching sentence boundaries in en and zh, never in mathematical norms. Copy bibliography entries verbatim. A references heading appears only once. Never manufacture image filenames or translated_image. Unreadable content must be marked [unclear, see page N], never invented. Do not include headers, watermarks or page numbers.`
+const schema = `Return ONLY valid JSON. Use {"meta":{"title_en":"","title_zh":"","short_zh":""},"blocks":[],"glossary":[{"en":"term","zh":"translation"}],"references":[{"id":"1","text":"original reference"}]}. Each block has a stable id, type, and page (original PDF page number). Allowed types: heading (en,zh,level,num), para (en,zh), list (ordered,items:[{en,zh}]), math (tex,tag), table (head and rows MUST be two-dimensional arrays, caption_en,caption_zh), figure (box:[x0,y0,x1,y1] normalized 0..1,image_en,image_zh,caption_en,caption_zh), references. Use original reading order, read columns in order. Preserve all content, citations, links, footnotes, equations and numeric values. Never summarize. Footnotes are para blocks with role=footnote and num. Keep display math in math blocks and inline math in $TeX$, escape JSON backslashes. Code is a para with fenced code, never insert sentence markers in code or math. Insert ‖ at matching sentence boundaries in en and zh, never in mathematical norms. Preserve Markdown bold and italic from the supplied source text in both original and translation. Preserve in-paper cross-reference links such as [Table 3](#tab:3) and author-year citations as [Author, 2024](#cite:Author-2024), retaining the same keys in translations. Copy every bibliography entry verbatim with its original page and printed citation key. Keep distinct entries even when their printed keys collide. A references heading appears only once. Never manufacture image filenames or translated_image. Unreadable content must be marked [unclear, see page N], never invented. Do not include headers, watermarks or page numbers.`
 
 func Prompt(ws *store.Workspace, cfg, paper Object, pages []int, read bool, todo Object) (string, []string) {
 	target := Target(Obj(paper["meta"]), cfg)
@@ -790,7 +792,7 @@ func Prompt(ws *store.Workspace, cfg, paper Object, pages []int, read bool, todo
 		return b.String(), images
 	}
 	for _, n := range pages {
-		txt, _ := os.ReadFile(filepath.Join(ws.Root, "extract", fmt.Sprintf("page-%03d.txt", n)))
+		txt := pdf.PromptText(ws, n)
 		fmt.Fprintf(&b, "\n===== PAGE %d =====\n%s\n", n, txt)
 		if Obj(cfg["openai"])["vision"] == true || Str(cfg["engine"]) == "claude" || Str(cfg["engine"]) == "codex" {
 			for _, info := range List(Obj(paper["meta"])["pages"]) {

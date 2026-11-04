@@ -51,7 +51,8 @@ func safeURL(s string) string {
 	}
 	return strings.NewReplacer("(", "%28", ")", "%29", "[", "%5B", "]", "%5D").Replace(s)
 }
-func parseLinks(data []byte) map[string][]Link {
+func parseLinks(data []byte) map[string][]Link { return parseAnnotationLinks(data, false) }
+func parseAnnotationLinks(data []byte, internal bool) map[string][]Link {
 	result := map[string][]Link{}
 	d := xml.NewDecoder(bytes.NewReader(cleanPDFXML(data)))
 	d.Strict = false
@@ -79,7 +80,13 @@ func parseLinks(data []byte) map[string][]Link {
 			if t.Name.Local == "a" && current == nil {
 				for _, a := range t.Attr {
 					if a.Name.Local == "href" {
-						if u := safeURL(a.Value); u != "" {
+						u := safeURL(a.Value)
+						if internal && u == "" {
+							if link, err := url.Parse(a.Value); err == nil && link.Scheme == "" && link.Fragment != "" {
+								u = "#"
+							}
+						}
+						if u != "" {
 							current = &Link{URL: u}
 							text.Reset()
 							depth = 1
@@ -161,9 +168,10 @@ func EnsureLinks(ctx context.Context, ws *store.Workspace) (map[string][]Link, e
 
 var protectedText = regexp.MustCompile("(?s)```.*?```|`[^`]*`|\\$\\$.*?\\$\\$|\\$[^$]*\\$|\\[[^\\]\\n]*\\]\\([^\\n]*?\\)")
 
-func linkText(text string, links []Link) string {
+func linkText(text string, links []Link) string { return insertAnnotationLinks(text, links, false) }
+func insertAnnotationLinks(text string, links []Link, internal bool) string {
 	for _, link := range links {
-		if link.Quote == "" || safeURL(link.URL) == "" {
+		if link.Quote == "" || (safeURL(link.URL) == "" && !(internal && link.URL == "#")) {
 			continue
 		}
 		ranges := protectedText.FindAllStringIndex(text, -1)
