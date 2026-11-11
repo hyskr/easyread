@@ -5,7 +5,7 @@
 (function (PR) {
   "use strict";
   const dlg = () => PR.$("#settingsDlg");
-  const ALL_TABS = [["chat", PR.t("模型")], ["reading", PR.t("阅读")], ["library", PR.t("侧边栏")], ["cloud", PR.t("云文献库")], ["keys", PR.t("快捷键")]];
+  const ALL_TABS = [["chat", PR.t("模型")], ["reading", PR.t("阅读")], ["library", PR.t("侧边栏")], ["cloud", PR.t("云文献库")], ["keys", PR.t("快捷键")], ["updates", PR.t("软件更新")]];
   const tabs = () => ALL_TABS.filter(([k]) => PR.settingsTabs[k]);  // “侧边栏”页只在文献库页面有
   PR.settingsTabs = PR.settingsTabs || {};
   const st = (PR.settingsState = { tab: "chat", cfg: null, presets: [], groups: [], found: null, chat: null, ui: null });
@@ -54,7 +54,7 @@
     dlg().querySelector(".dialog").innerHTML =
       '<div class="set-head"><h2>' + PR.t("设置") + '</h2><div class="set-tabs">' + tabs().map(([k, l]) => '<button data-set-tab="' + k + '" class="' + (st.tab === k ? "on" : "") + '">' + l + "</button>").join("") + "</div>" + (st.tab === "chat" ? saveStatusHtml() : "") + "</div>" +
       '<div class="set-body">' + (t ? t.render(st) : "") + "</div>" +
-      '<div class="actions set-foot"><button class="linkish" id="showLog">' + PR.t("运行日志") + '</button><span class="grow"></span><button class="btn" id="setCancel">' + (st.tab === "chat" ? PR.t("关闭") : PR.t("取消")) + '</button>' + (st.tab === "chat" ? "" : '<button class="btn primary" id="setSave">' + PR.t("保存") + "</button>") + "</div>";
+      '<div class="actions set-foot"><button class="linkish" id="showLog">' + PR.t("运行日志") + '</button><span class="grow"></span><button class="btn" id="setCancel">' + ((st.tab === "chat" || st.tab === "updates") ? PR.t("关闭") : PR.t("取消")) + '</button>' + ((st.tab === "chat" || st.tab === "updates") ? "" : '<button class="btn primary" id="setSave">' + PR.t("保存") + "</button>") + "</div>";
     dlg().querySelector(".set-body").scrollTop = scroll;
   }
 

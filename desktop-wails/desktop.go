@@ -204,7 +204,9 @@ func (a *App) menus() *menu.Menu {
 		wr.MessageDialog(a.ctx, wr.MessageDialogOptions{Type: wr.InfoDialog, Title: "EasyRead Wails", Message: "当前版本 " + version + "\nGo 后端 · macOS Apple Silicon"})
 	})
 	app.AddSeparator()
-	app.AddText("检查更新…", nil, func(*menu.CallbackData) { go a.CheckUpdate(true) })
+	app.AddText("检查更新…", nil, func(*menu.CallbackData) {
+		wr.WindowExecJS(a.ctx, `document.querySelector('iframe').contentWindow.postMessage({easyreadUpdateSettings:true},'*')`)
+	})
 	app.AddSeparator()
 	app.AddText("退出", keys.CmdOrCtrl("q"), func(*menu.CallbackData) { a.requestQuit() })
 	m.Append(menu.EditMenu())

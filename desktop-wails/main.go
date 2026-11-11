@@ -29,6 +29,9 @@ import (
 )
 
 type App struct {
+	updateMu    sync.Mutex
+	updateState map[string]any
+
 	ctx           context.Context
 	command       *exec.Cmd
 	url           string
@@ -167,10 +170,10 @@ document.addEventListener("contextmenu", e => e.preventDefault());
 window.addEventListener("keydown",e=>{if(e.key==="Escape"&&!e.isComposing)e.preventDefault()});
 const pending=new Map();let serial=0;
 function native(method,...args){return new Promise((resolve,reject)=>{const id=++serial;pending.set(id,{resolve,reject});window.top.postMessage({easyreadNative:true,id,method,args},'*')})}
-window.addEventListener('message',e=>{const d=e.data;if(d?.easyreadReply){const p=pending.get(d.id);if(p){pending.delete(d.id);d.error?p.reject(Error(d.error)):p.resolve(d.value)}}if(d?.easyreadLibrary&&window.easyreadTabs)window.easyreadTabs.select('library');if(d?.easyreadCloseTab&&window.easyreadTabs){const tab=document.querySelector('.paper-tab.active .tab-title');if(tab&&tab.id!=='tab-library')window.easyreadTabs.close(tab.id.slice(4))}if(d?.easyreadOpen&&window.easyreadTabs)window.easyreadTabs.open(d.easyreadOpen);if(d?.easyreadSave&&window.easyreadTabs)window.easyreadTabs.saveAll().then(r=>{if(r.every(v=>v!==false))return native('QuitSaved');throw Error('笔记尚未保存成功，已取消退出')}).catch(error=>native('QuitFailed',error.message))});
+window.addEventListener('message',e=>{const d=e.data;if(d?.easyreadUpdateSettings&&window.easyreadTabs){const frame=document.querySelector('.paper-pane:not(.inactive)');frame?.contentWindow.PR?.openSettings('updates')}if(d?.easyreadReply){const p=pending.get(d.id);if(p){pending.delete(d.id);d.error?p.reject(Error(d.error)):p.resolve(d.value)}}if(d?.easyreadLibrary&&window.easyreadTabs)window.easyreadTabs.select('library');if(d?.easyreadCloseTab&&window.easyreadTabs){const tab=document.querySelector('.paper-tab.active .tab-title');if(tab&&tab.id!=='tab-library')window.easyreadTabs.close(tab.id.slice(4))}if(d?.easyreadOpen&&window.easyreadTabs)window.easyreadTabs.open(d.easyreadOpen);if(d?.easyreadSave&&window.easyreadTabs)window.easyreadTabs.saveAll().then(r=>{if(r.every(v=>v!==false))return native('QuitSaved');throw Error('笔记尚未保存成功，已取消退出')}).catch(error=>native('QuitFailed',error.message))});
 window.addEventListener('load',()=>{if(window.easyreadTabs)native('PageReady')});
 window.go={main:{App:{PickFolder:()=>native('PickFolder'),Save:(...args)=>native('Save',...args)}}};
-window.easyreadDesktop={isElectron:false,isWails:true,deepLinkScheme:'easyread-wails',platform:'darwin',pickFolder:()=>window.go.main.App.PickFolder(),saveExport:p=>native('Export',p),exportDirectory:async()=>'',updateState:async()=>({supported:false}),onUpdateState:()=>()=>{},onBeforeQuit:cb=>{window.wailsSave=cb}};
+window.easyreadDesktop={isElectron:false,isWails:true,deepLinkScheme:'easyread-wails',platform:'darwin',pickFolder:()=>window.go.main.App.PickFolder(),saveExport:p=>native('Export',p),exportDirectory:async()=>'',updateState:()=>native('UpdateStatus'),checkUpdate:()=>native('CheckUpdate',true),onUpdateState:()=>()=>{},onBeforeQuit:cb=>{window.wailsSave=cb}};
 const originalClick=HTMLAnchorElement.prototype.click;HTMLAnchorElement.prototype.click=function(){if(this.download){exportFile(this);return}return originalClick.call(this)};async function exportFile(a){try{const b=await(await fetch(a.href)).blob();const r=new FileReader();r.onload=()=>window.go.main.App.Save(a.download,String(r.result).split(',')[1]);r.readAsDataURL(b)}catch(err){alert(err.message)}};document.addEventListener('click',async e=>{const a=e.target.closest('a[download]');if(!a)return;e.preventDefault();e.stopImmediatePropagation();try{const b=await(await fetch(a.href)).blob();const r=new FileReader();r.onload=()=>window.go.main.App.Save(a.download,String(r.result).split(',')[1]);r.readAsDataURL(b)}catch(err){alert(err.message)}},true);
 </script>`
 			html := strings.Replace(string(b), "<head>", "<head>"+bridge, 1)
@@ -202,7 +205,7 @@ window.showUpdateProgress=s=>{const box=document.querySelector('#update-status')
 document.addEventListener("contextmenu",e=>e.preventDefault());
  const app=document.querySelector('iframe');app.src=` + string(pageJSON) + `;
  window.addEventListener('message',async e=>{const d=e.data;if(!d?.easyreadNative||e.origin!==new URL(app.src).origin)return;
- if(!['PickFolder','Save','Export','QuitSaved','QuitFailed','PageReady'].includes(d.method))return;
+ if(!['UpdateStatus','CheckUpdate','PickFolder','Save','Export','QuitSaved','QuitFailed','PageReady'].includes(d.method))return;
  try{const value=await window.go.main.App[d.method](...d.args);e.source.postMessage({easyreadReply:true,id:d.id,value},e.origin)}catch(error){e.source.postMessage({easyreadReply:true,id:d.id,error:error.message},e.origin)}});
  </script></body></html>`
 	nativeHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

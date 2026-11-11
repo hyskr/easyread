@@ -31,7 +31,19 @@ func (p *downloadProgress) Write(b []byte) (int, error) {
 	}
 	return len(b), nil
 }
+func (a *App) UpdateStatus() map[string]any {
+	a.updateMu.Lock()
+	defer a.updateMu.Unlock()
+	result := map[string]any{"current": version, "busy": a.updating.Load(), "supported": false, "message": "尚未检查更新"}
+	for k, v := range a.updateState {
+		result[k] = v
+	}
+	return result
+}
 func (a *App) updateProgress(message string, received, total int64) {
+	a.updateMu.Lock()
+	a.updateState = map[string]any{"message": message, "received": received, "total": total}
+	a.updateMu.Unlock()
 	data, _ := json.Marshal(map[string]any{"message": message, "received": received, "total": total})
 	wr.WindowExecJS(a.ctx, "window.showUpdateProgress?.("+string(data)+")")
 }
