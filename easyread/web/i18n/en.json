@@ -1672,5 +1672,8 @@
  "正在检查更新": "Checking for updates",
  "下载完成后会验证签名并保存笔记，再重启安装。失败后可重新检查更新。": "After downloading, the signature is verified and notes are saved before restarting to install. Check again to retry a failed update.",
  "查看发布记录": "View release history",
- "下载完成后会保存笔记，再重启安装。失败后可重新检查更新。": "After downloading, notes are saved before restarting to install. Check again to retry a failed update."
+ "下载完成后会保存笔记，再重启安装。失败后可重新检查更新。": "After downloading, notes are saved before restarting to install. Check again to retry a failed update.",
+ "重启安装": "Restart to install",
+ "下载更新": "Download update",
+ "更新包下载后会保留，点击重启安装时保存笔记并安装。": "Downloaded updates are kept. Restart to install saves your notes before installation."
 }

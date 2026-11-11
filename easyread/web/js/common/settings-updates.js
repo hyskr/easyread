@@ -21,16 +21,18 @@
     if (state.total > 0) { progress.max = state.total; progress.value = state.received; bytes.textContent = Math.floor(state.received / state.total * 100) + '% · ' + (state.received / 1048576).toFixed(1) + ' / ' + (state.total / 1048576).toFixed(1) + ' MB'; }
     else { progress.removeAttribute('value'); bytes.textContent = state.received > 0 ? (state.received / 1048576).toFixed(1) + ' MB' : ''; }
     root.querySelector('[data-update-check]').disabled = pending || !!state.busy;
+    const action=root.querySelector('[data-update-action]');action.hidden=!state.cached&&!state.latest;action.disabled=pending||!!state.busy;action.textContent=state.cached?PR.t('重启安装')+' '+state.cached:PR.t('下载更新')+' '+state.latest;
   }
   PR.settingsTabs.updates = {
     render() {
       clearTimeout(timer); timer = setTimeout(refresh, 0);
-      return '<section data-update-page><h3>EasyRead Wails</h3><p>' + PR.t('当前版本') + ' <b data-update-current>…</b></p><p data-update-message role="status"></p><progress style="width:100%" hidden></progress><p data-update-bytes class="hint"></p><button class="btn primary" data-update-check>' + PR.t('检查更新') + '</button><p class="set-lead">' + PR.t('下载完成后会保存笔记，再重启安装。失败后可重新检查更新。') + '</p><a href="https://github.com/hyskr/easyread/releases" target="_blank" rel="noopener noreferrer">' + PR.t('查看发布记录') + '</a></section>';
+      return '<section data-update-page><h3>EasyRead Wails</h3><p>' + PR.t('当前版本') + ' <b data-update-current>…</b></p><p data-update-message role="status"></p><progress style="width:100%" hidden></progress><p data-update-bytes class="hint"></p><button class="btn primary" data-update-check>' + PR.t('检查更新') + '</button> <button class="btn primary" data-update-action hidden></button><p class="set-lead">' + PR.t('更新包下载后会保留，点击重启安装时保存笔记并安装。') + '</p><a href="https://github.com/hyskr/easyread/releases" target="_blank" rel="noopener noreferrer">' + PR.t('查看发布记录') + '</a></section>';
     },
     async click(event) {
-      if (!event.target.closest('[data-update-check]') || pending) return false;
+      const action=event.target.closest('[data-update-action]');
+      if ((!action&&!event.target.closest('[data-update-check]')) || pending) return false;
       pending = true; state.message = PR.t('正在检查更新'); paint();
-      try { await bridge.checkUpdate(); } catch (error) { state.message = error.message; }
+      try { if(action){if(state.cached)await bridge.installUpdate();else await bridge.downloadUpdate();}else await bridge.checkUpdate(); } catch (error) { state.message = error.message; }
       finally { pending = false; await refresh(); }
       return false;
     },
