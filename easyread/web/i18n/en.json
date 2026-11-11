@@ -1671,5 +1671,6 @@
  "尚未检查更新": "Updates have not been checked",
  "正在检查更新": "Checking for updates",
  "下载完成后会验证签名并保存笔记，再重启安装。失败后可重新检查更新。": "After downloading, the signature is verified and notes are saved before restarting to install. Check again to retry a failed update.",
- "查看发布记录": "View release history"
+ "查看发布记录": "View release history",
+ "下载完成后会保存笔记，再重启安装。失败后可重新检查更新。": "After downloading, notes are saved before restarting to install. Check again to retry a failed update."
 }

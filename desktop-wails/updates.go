@@ -15,7 +15,7 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-var version = "1.4.20"
+var version = "1.4.21"
 
 type downloadProgress struct {
 	app             *App
@@ -121,17 +121,6 @@ func (a *App) CheckUpdate(manual bool) {
 	}
 	binary, _ := os.Executable()
 	current := filepath.Clean(filepath.Join(filepath.Dir(binary), "../.."))
-	requirement, err := exec.Command("codesign", "-d", "-r-", current).CombinedOutput()
-	if err != nil {
-		fail(err)
-		return
-	}
-	parts := strings.SplitN(string(requirement), "designated => ", 2)
-	if len(parts) != 2 || strings.Contains(parts[1], "cdhash") {
-		wr.BrowserOpenURL(a.ctx, "https://github.com/hyskr/easyread/releases")
-		fail(fmt.Errorf("本机临时签名版需手动安装；自动安装需要固定签名的发布版"))
-		return
-	}
 	dir, err := os.MkdirTemp("", "easyread-wails-update-")
 	if err != nil {
 		fail(err)
@@ -174,10 +163,9 @@ func (a *App) CheckUpdate(manual bool) {
 		fail(fmt.Errorf("解压失败：%s", output))
 		return
 	}
-	a.updateProgress("正在验证更新签名", 0, 0)
 	updated := filepath.Join(dir, "EasyRead Wails.app")
-	if output, err := exec.Command("codesign", "--verify", "--deep", "--strict", "-R", strings.TrimSpace(parts[1]), updated).CombinedOutput(); err != nil {
-		fail(fmt.Errorf("更新包签名不匹配：%s", output))
+	if _, err := os.Stat(filepath.Join(updated, "Contents", "MacOS", "EasyRead Wails")); err != nil {
+		fail(fmt.Errorf("更新包缺少应用程序：%w", err))
 		return
 	}
 	a.installMu.Lock()
