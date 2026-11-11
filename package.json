@@ -1,17 +1,19 @@
 {
   "name": "easyread-desktop",
   "version": "1.4.7",
-  "description": "EasyRead desktop application powered by Electron",
+  "description": "EasyRead desktop application powered by Wails and Go",
   "author": "Edwardxlai",
   "main": "electron/main.cjs",
   "private": true,
   "scripts": {
-    "dev": "electron .",
-    "start": "electron .",
+    "dev": "bash scripts/start_wails.sh",
+    "start": "bash scripts/start_wails.sh",
     "build:editor": "node scripts/build_note_editor.cjs",
     "build:backend:go": "node scripts/build_backend.cjs",
     "build:backend": "python scripts/build_backend.py",
-    "dist": "npm run build:editor && npm run build:backend && electron-builder --publish never"
+    "dist": "bash scripts/package_wails.sh",
+    "start:electron": "electron .",
+    "dist:electron": "npm run build:editor && npm run build:backend && electron-builder --publish never"
   },
   "devDependencies": {
     "@floating-ui/react": "^0.27.20",

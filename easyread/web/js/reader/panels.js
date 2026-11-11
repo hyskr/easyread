@@ -163,7 +163,7 @@
     body.classList.toggle("toc-pinned", pinned);
     const button = PR.$("[data-toc-pin]");
     button.setAttribute("aria-pressed", String(tocPinned));
-    button.title = PR.t(tocPinned ? "取消固定目录" : "固定目录");
+    button.title = tocPinned ? PR.t("取消固定目录") : PR.t("固定目录");
     button.setAttribute("aria-label", button.title);
     if (pinned) { body.classList.add("drawer-open"); PR.renderDrawer(); }
     PR.fitWide?.(); PR.renderMargin?.();

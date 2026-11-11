@@ -44,7 +44,7 @@ jobs:
         shell: bash
         run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version --allow-same-version
       - name: Build and package
-        run: npm run dist
+        run: npm run dist:electron
         env:
           # macOS 包用固定的自签名证书签（scripts/mac_sign.cjs），应用内更新靠它认出是同一个程序
           MAC_SIGN_P12: ${{ secrets.MAC_SIGN_P12 }}
