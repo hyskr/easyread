@@ -571,11 +571,11 @@ func mergeExtras(p, data, baseline Object) {
 	p["references"] = mergeReferences(List(p["references"]), List(data["references"]))
 	for key, ident := range map[string]string{"glossary": "en"} {
 		have := map[string]bool{}
-		items := List(p[key])
+		items := validGlossary(p[key])
 		for _, x := range items {
 			have[strings.ToLower(fmt.Sprint(Obj(x)[ident]))] = true
 		}
-		for _, x := range List(data[key]) {
+		for _, x := range validGlossary(data[key]) {
 			b := Obj(x)
 			id := strings.ToLower(fmt.Sprint(b[ident]))
 			if id != "" && id != "<nil>" && !have[id] {

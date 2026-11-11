@@ -52,7 +52,7 @@ func TestSSEFramingAndInvalidEvents(t *testing.T) {
 	cases := []struct {
 		name, payload string
 		ok            bool
-	}{{"multiline-comments", ": ping\r\nevent: message\r\ndata: {\"choices\": [\r\ndata: {\"delta\": {\"content\": \"ok\"}}]}\r\n\r\ndata: [DONE]\r\n\r\n", true}, {"relay", delta + "\n" + stop + "\ndata: [DONE]\n", true}, {"no-final-blank", delta + "\n\n" + stop + "\n", true}, {"no-final-newline", delta + "\n\n" + stop, true}, {"broken", "data: broken\n\ndata: [DONE]\n\n", false}, {"null", delta + "\n\ndata: null\n\ndata: [DONE]\n\n", false}}
+	}{{"multiline-comments", ": ping\r\nevent: message\r\ndata: {\"choices\": [\r\ndata: {\"delta\": {\"content\": \"ok\"},\"finish_reason\":\"stop\"}]}\r\n\r\ndata: [DONE]\r\n\r\n", true}, {"relay", delta + "\n" + stop + "\ndata: [DONE]\n", true}, {"no-final-blank", delta + "\n\n" + stop + "\n", true}, {"no-final-newline", delta + "\n\n" + stop, true}, {"done-without-finish", delta + "\n\ndata: [DONE]\n\n", false}, {"broken", "data: broken\n\ndata: [DONE]\n\n", false}, {"null", delta + "\n\ndata: null\n\ndata: [DONE]\n\n", false}}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

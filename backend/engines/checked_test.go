@@ -108,7 +108,7 @@ func TestStreamCheckedCallbackAndCancellationIdentity(t *testing.T) {
 				}
 				calls.Add(1)
 				w.Header().Set("Content-Type", "text/event-stream")
-				w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"}}]}\n\ndata: [DONE]\n\n"))
+				w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"ok\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"))
 			}))
 			defer s.Close()
 			cfg := netConfig(s.URL)

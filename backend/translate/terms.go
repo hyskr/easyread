@@ -113,6 +113,8 @@ func swapTerm(source, text, en, mine, old string, known []string) string {
 }
 func UnifyTerms(paper, data Object) { UnifyTermsWithSources(paper, data, nil) }
 func UnifyTermsWithSources(paper, data, enOf Object) {
+	paper["glossary"] = validGlossary(paper["glossary"])
+	data["glossary"] = validGlossary(data["glossary"])
 	known := map[string]string{}
 	keep := []string{}
 	for _, x := range append(append([]any{}, List(paper["glossary"])...), List(data["glossary"])...) {

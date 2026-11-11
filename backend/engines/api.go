@@ -367,7 +367,6 @@ func apiRun(ctx context.Context, o Object, prompt string, images []string, emit 
 		raw := strings.Join(lines, "\n")
 		lines = nil
 		if raw == "[DONE]" {
-			done = true
 			return nil
 		}
 		var ev Object

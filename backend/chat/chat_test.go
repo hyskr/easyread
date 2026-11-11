@@ -94,7 +94,7 @@ func TestNDJSONStoresAnswerAndImages(t *testing.T) {
 		raw, _ := json.Marshal(b)
 		hadImage = bytes.Contains(raw, []byte("image_url"))
 		w.Header().Set("Content-Type", "text/event-stream")
-		w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\ndata: [DONE]\n\n"))
+		w.Write([]byte("data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"},\"finish_reason\":\"stop\"}]}\n\ndata: [DONE]\n\n"))
 	}))
 	defer s.Close()
 	ws := workspace(t)
